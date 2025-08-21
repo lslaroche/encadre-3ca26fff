@@ -93,11 +93,11 @@ const Index = () => {
           console.log("Valeurs uniques pour 'meuble_txt':", uniqueMeuble);
         }
         
-        // Conversion des valeurs pour l'API (à ajuster selon les vraies valeurs)
-        const pieceValue = roomCount === "4+" ? "4 pièces et plus" : `${roomCount} pièce${roomCount !== "1" ? "s" : ""}`;
+        // Conversion des valeurs selon la documentation officielle de l'API
+        const pieceValue = roomCount === "4+" ? "4" : roomCount; // Simplement "1", "2", "3", "4"
         const epoqueValue = constructionPeriod === "avant-1946" ? "Avant 1946" :
                            constructionPeriod === "1946-1970" ? "1946-1970" :
-                           constructionPeriod === "1971-1990" ? "1971-1990" : "Après 1990";
+                           constructionPeriod === "1971-1990" ? "1971-1990" : "Apres 1990"; // Attention: "Apres" sans accent
         const meubleTxt = isFurnished === "meuble" ? "meublé" : "non meublé";
         
         console.log("Paramètres de recherche:", { pieceValue, epoqueValue, meubleTxt });
