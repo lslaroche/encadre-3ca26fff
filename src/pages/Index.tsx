@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Search, MapPin, Calculator, Info } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
@@ -11,6 +14,9 @@ const Index = () => {
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [surface, setSurface] = useState("");
   const [rent, setRent] = useState("");
+  const [constructionPeriod, setConstructionPeriod] = useState("");
+  const [roomCount, setRoomCount] = useState("");
+  const [isFurnished, setIsFurnished] = useState("");
   const [result, setResult] = useState<{
     isCompliant: boolean;
     maxRent: number;
@@ -27,12 +33,20 @@ const Index = () => {
   };
 
   const handleSimulation = () => {
-    if (!selectedCity || !surface || !rent) return;
+    if (!selectedCity || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished) return;
     
-    // Simulation simple pour démonstration
+    // Simulation simple pour démonstration avec les nouveaux paramètres
     const surfaceNum = parseFloat(surface);
     const rentNum = parseFloat(rent);
-    const maxRentPerM2 = selectedCity.toLowerCase().includes("paris") ? 35 : 25;
+    let maxRentPerM2 = selectedCity.toLowerCase().includes("paris") ? 35 : 25;
+    
+    // Ajustements selon l'époque de construction
+    if (constructionPeriod === "avant-1946") maxRentPerM2 *= 0.95;
+    else if (constructionPeriod === "apres-1990") maxRentPerM2 *= 1.05;
+    
+    // Ajustement si meublé
+    if (isFurnished === "meuble") maxRentPerM2 *= 1.2;
+    
     const maxRent = surfaceNum * maxRentPerM2;
     
     setResult({
@@ -100,9 +114,63 @@ const Index = () => {
               </div>
             </div>
 
+            {/* Époque de construction */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Époque de construction</Label>
+              <RadioGroup value={constructionPeriod} onValueChange={setConstructionPeriod}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="avant-1946" id="avant-1946" />
+                  <Label htmlFor="avant-1946">Avant 1946</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1946-1970" id="1946-1970" />
+                  <Label htmlFor="1946-1970">1946-1970</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1971-1990" id="1971-1990" />
+                  <Label htmlFor="1971-1990">1971-1990</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="apres-1990" id="apres-1990" />
+                  <Label htmlFor="apres-1990">Après 1990</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Nombre de pièces */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Nombre de pièces</Label>
+              <Select value={roomCount} onValueChange={setRoomCount}>
+                <SelectTrigger className="bg-muted/50 border-primary/20 focus:border-primary">
+                  <SelectValue placeholder="Sélectionnez le nombre de pièces" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 pièce</SelectItem>
+                  <SelectItem value="2">2 pièces</SelectItem>
+                  <SelectItem value="3">3 pièces</SelectItem>
+                  <SelectItem value="4+">4 pièces et plus</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Type de location */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Type de location</Label>
+              <RadioGroup value={isFurnished} onValueChange={setIsFurnished}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="non-meuble" id="non-meuble" />
+                  <Label htmlFor="non-meuble">Non meublé</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="meuble" id="meuble" />
+                  <Label htmlFor="meuble">Meublé</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             {/* Surface */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Surface du logement (m²)</label>
+              <Label className="text-sm font-medium">Surface du logement (m²)</Label>
               <Input
                 type="number"
                 placeholder="Ex: 45"
@@ -114,7 +182,7 @@ const Index = () => {
 
             {/* Loyer */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Loyer hors charges (€)</label>
+              <Label className="text-sm font-medium">Loyer hors charges (€)</Label>
               <Input
                 type="number"
                 placeholder="Ex: 1200"
@@ -126,7 +194,7 @@ const Index = () => {
 
             <Button 
               onClick={handleSimulation}
-              disabled={!selectedCity || !surface || !rent}
+              disabled={!selectedCity || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished}
               className="w-full bg-primary hover:bg-primary/90"
             >
               Vérifier l'encadrement
