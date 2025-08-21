@@ -44,14 +44,15 @@ export function AddressAutocomplete({
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5&autocomplete=1&citycode=75&type=housenumber`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1`
       );
       const data = await response.json();
-      // Filtrer pour garder uniquement Paris
+      // Filtrer pour garder uniquement Paris (codes postaux 75xxx)
       const parisResults = (data.features || []).filter((feature: AddressResult) => 
-        feature.properties.city === "Paris" || feature.properties.citycode?.startsWith("75")
+        feature.properties.postcode?.startsWith("75") || 
+        feature.properties.city?.toLowerCase().includes("paris")
       );
-      setSuggestions(parisResults);
+      setSuggestions(parisResults.slice(0, 5));
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
       setSuggestions([]);
