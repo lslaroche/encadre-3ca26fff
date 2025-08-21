@@ -67,12 +67,31 @@ const Index = () => {
     // Utilisation de l'API officielle de Paris pour les données d'encadrement
     if (selectedCity.toLowerCase().includes("paris")) {
       try {
-        // D'abord, on fait une requête simple pour voir quelles valeurs existent dans l'API
-        const testUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers/records?limit=5`;
-        const testResponse = await fetch(testUrl);
-        const testData = await testResponse.json();
+        // Récupérons d'abord la structure complète de l'API pour voir tous les champs disponibles
+        const schemaUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers`;
+        const schemaResponse = await fetch(schemaUrl);
+        const schemaData = await schemaResponse.json();
         
-        console.log("Exemples de données dans l'API:", testData.results?.slice(0, 3));
+        console.log("Structure complète du dataset:", schemaData);
+        console.log("Champs disponibles:", schemaData.dataset?.fields);
+        
+        // Récupérons quelques exemples pour voir les valeurs exactes
+        const exampleUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers/records?limit=10`;
+        const exampleResponse = await fetch(exampleUrl);
+        const exampleData = await exampleResponse.json();
+        
+        console.log("Exemples de données:", exampleData.results?.slice(0, 5));
+        
+        // Analysons les valeurs uniques pour chaque champ
+        if (exampleData.results?.length > 0) {
+          const uniquePieces = [...new Set(exampleData.results.map(r => r.piece))];
+          const uniqueEpoques = [...new Set(exampleData.results.map(r => r.epoque))];
+          const uniqueMeuble = [...new Set(exampleData.results.map(r => r.meuble_txt))];
+          
+          console.log("Valeurs uniques pour 'piece':", uniquePieces);
+          console.log("Valeurs uniques pour 'epoque':", uniqueEpoques);
+          console.log("Valeurs uniques pour 'meuble_txt':", uniqueMeuble);
+        }
         
         // Conversion des valeurs pour l'API (à ajuster selon les vraies valeurs)
         const pieceValue = roomCount === "4+" ? "4 pièces et plus" : `${roomCount} pièce${roomCount !== "1" ? "s" : ""}`;
