@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Calculator, Info } from "lucide-react";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const Index = () => {
   const [location, setLocation] = useState("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
   const [surface, setSurface] = useState("");
   const [rent, setRent] = useState("");
   const [result, setResult] = useState<{
@@ -15,13 +17,22 @@ const Index = () => {
     difference: number;
   } | null>(null);
 
+  const handleAddressChange = (value: string, result?: any) => {
+    setLocation(value);
+    if (result) {
+      setSelectedCity(result.properties.city);
+    } else {
+      setSelectedCity("");
+    }
+  };
+
   const handleSimulation = () => {
-    if (!location || !surface || !rent) return;
+    if (!selectedCity || !surface || !rent) return;
     
     // Simulation simple pour démonstration
     const surfaceNum = parseFloat(surface);
     const rentNum = parseFloat(rent);
-    const maxRentPerM2 = location.toLowerCase().includes("paris") ? 35 : 25;
+    const maxRentPerM2 = selectedCity.toLowerCase().includes("paris") ? 35 : 25;
     const maxRent = surfaceNum * maxRentPerM2;
     
     setResult({
@@ -65,15 +76,11 @@ const Index = () => {
             {/* Localisation */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Localisation</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Commune ou Code postal"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="pl-10 bg-muted/50 border-primary/20 focus:border-primary"
-                />
-              </div>
+              <AddressAutocomplete
+                value={location}
+                onChange={handleAddressChange}
+                placeholder="Tapez votre commune..."
+              />
               <div className="flex flex-wrap gap-2 mt-2">
                 <span className="text-sm text-muted-foreground">Essayez avec</span>
                 {["Paris", "Lille", "Lyon", "Marseille", "Bordeaux", "Montpellier"].map((city) => (
@@ -81,7 +88,10 @@ const Index = () => {
                     key={city}
                     variant="outline"
                     size="sm"
-                    onClick={() => setLocation(city)}
+                    onClick={() => {
+                      setLocation(city);
+                      setSelectedCity(city);
+                    }}
                     className="h-6 px-2 text-xs border-primary/20 hover:bg-primary/10"
                   >
                     {city}
@@ -116,7 +126,7 @@ const Index = () => {
 
             <Button 
               onClick={handleSimulation}
-              disabled={!location || !surface || !rent}
+              disabled={!selectedCity || !surface || !rent}
               className="w-full bg-primary hover:bg-primary/90"
             >
               Vérifier l'encadrement
