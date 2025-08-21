@@ -45,16 +45,34 @@ const Index = () => {
                            constructionPeriod === "1971-1990" ? "1971-1990" : "Après 1990";
         const meubleTxt = isFurnished === "meuble" ? "meublé" : "non meublé";
         
+        console.log("Paramètres de recherche:", { pieceValue, epoqueValue, meubleTxt });
+        
         const apiUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers/records?where=piece%3D%22${encodeURIComponent(pieceValue)}%22%20AND%20epoque%3D%22${encodeURIComponent(epoqueValue)}%22%20AND%20meuble_txt%3D%22${encodeURIComponent(meubleTxt)}%22&limit=1`;
+        
+        console.log("URL API appelée:", apiUrl);
         
         const response = await fetch(apiUrl);
         const data = await response.json();
         
+        console.log("Réponse API complète:", data);
+        console.log("Nombre de résultats:", data.results?.length);
+        
         if (data.results && data.results.length > 0) {
           const result = data.results[0];
+          console.log("Premier résultat:", result);
+          console.log("Prix max au m²:", result.max);
+          
           const maxRentPerM2 = parseFloat(result.max);
           const maxRent = parseFloat(surface) * maxRentPerM2;
           const rentNum = parseFloat(rent);
+          
+          console.log("Calculs:", { 
+            surface: parseFloat(surface), 
+            maxRentPerM2, 
+            maxRent, 
+            rentActuel: rentNum, 
+            conforme: rentNum <= maxRent 
+          });
           
           setResult({
             isCompliant: rentNum <= maxRent,
@@ -62,6 +80,7 @@ const Index = () => {
             difference: rentNum - maxRent
           });
         } else {
+          console.log("Aucune donnée trouvée, utilisation du fallback");
           // Fallback vers simulation simple si pas de données trouvées
           const surfaceNum = parseFloat(surface);
           const rentNum = parseFloat(rent);
