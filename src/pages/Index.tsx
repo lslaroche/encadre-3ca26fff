@@ -1,12 +1,174 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Search, MapPin, Calculator, Info } from "lucide-react";
 
 const Index = () => {
+  const [location, setLocation] = useState("");
+  const [surface, setSurface] = useState("");
+  const [rent, setRent] = useState("");
+  const [result, setResult] = useState<{
+    isCompliant: boolean;
+    maxRent: number;
+    difference: number;
+  } | null>(null);
+
+  const handleSimulation = () => {
+    if (!location || !surface || !rent) return;
+    
+    // Simulation simple pour démonstration
+    const surfaceNum = parseFloat(surface);
+    const rentNum = parseFloat(rent);
+    const maxRentPerM2 = location.toLowerCase().includes("paris") ? 35 : 25;
+    const maxRent = surfaceNum * maxRentPerM2;
+    
+    setResult({
+      isCompliant: rentNum <= maxRent,
+      maxRent,
+      difference: rentNum - maxRent
+    });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-secondary/20 to-background">
+      {/* Header */}
+      <header className="bg-background/90 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <Calculator className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">EncadrementLoyer</h1>
+              <p className="text-sm text-muted-foreground">Vérifiez si votre loyer respecte l'encadrement</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="container mx-auto px-4 py-8 max-w-2xl">
+        <Card className="shadow-lg">
+          <CardHeader className="bg-secondary/50">
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Simulateur d'encadrement des loyers
+            </CardTitle>
+            <CardDescription>
+              Entrez les informations de votre logement pour vérifier si le loyer respecte l'encadrement en vigueur
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6 pt-6">
+            {/* Localisation */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Localisation</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Commune ou Code postal"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="pl-10 bg-muted/50 border-primary/20 focus:border-primary"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="text-sm text-muted-foreground">Essayez avec</span>
+                {["Paris", "Lille", "Lyon", "Marseille", "Bordeaux", "Montpellier"].map((city) => (
+                  <Button
+                    key={city}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLocation(city)}
+                    className="h-6 px-2 text-xs border-primary/20 hover:bg-primary/10"
+                  >
+                    {city}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Surface */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Surface du logement (m²)</label>
+              <Input
+                type="number"
+                placeholder="Ex: 45"
+                value={surface}
+                onChange={(e) => setSurface(e.target.value)}
+                className="bg-muted/50 border-primary/20 focus:border-primary"
+              />
+            </div>
+
+            {/* Loyer */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Loyer hors charges (€)</label>
+              <Input
+                type="number"
+                placeholder="Ex: 1200"
+                value={rent}
+                onChange={(e) => setRent(e.target.value)}
+                className="bg-muted/50 border-primary/20 focus:border-primary"
+              />
+            </div>
+
+            <Button 
+              onClick={handleSimulation}
+              disabled={!location || !surface || !rent}
+              className="w-full bg-primary hover:bg-primary/90"
+            >
+              Vérifier l'encadrement
+            </Button>
+
+            {/* Results */}
+            {result && (
+              <Card className={`border-2 ${result.isCompliant ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <Badge variant={result.isCompliant ? "default" : "destructive"}>
+                      {result.isCompliant ? "Conforme" : "Non conforme"}
+                    </Badge>
+                    <Info className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Loyer maximum autorisé :</span>
+                      <span className="font-semibold">{result.maxRent.toFixed(2)} €</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Votre loyer :</span>
+                      <span className="font-semibold">{rent} €</span>
+                    </div>
+                    {!result.isCompliant && (
+                      <div className="flex justify-between text-red-600">
+                        <span>Dépassement :</span>
+                        <span className="font-semibold">+{result.difference.toFixed(2)} €</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Info section */}
+        <Card className="mt-8 bg-muted/30">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <Info className="w-4 h-4" />
+              À propos de l'encadrement des loyers
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              L'encadrement des loyers est un dispositif qui limite le montant des loyers dans certaines zones tendues. 
+              Il vise à rendre le logement plus accessible en fixant des plafonds de loyer au m² selon la localisation et le type de logement.
+            </p>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 };
