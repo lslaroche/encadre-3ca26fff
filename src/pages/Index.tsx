@@ -32,28 +32,81 @@ const Index = () => {
     }
   };
 
-  const handleSimulation = () => {
+  const handleSimulation = async () => {
     if (!selectedCity || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished) return;
     
-    // Simulation simple pour démonstration avec les nouveaux paramètres
-    const surfaceNum = parseFloat(surface);
-    const rentNum = parseFloat(rent);
-    let maxRentPerM2 = selectedCity.toLowerCase().includes("paris") ? 35 : 25;
-    
-    // Ajustements selon l'époque de construction
-    if (constructionPeriod === "avant-1946") maxRentPerM2 *= 0.95;
-    else if (constructionPeriod === "apres-1990") maxRentPerM2 *= 1.05;
-    
-    // Ajustement si meublé
-    if (isFurnished === "meuble") maxRentPerM2 *= 1.2;
-    
-    const maxRent = surfaceNum * maxRentPerM2;
-    
-    setResult({
-      isCompliant: rentNum <= maxRent,
-      maxRent,
-      difference: rentNum - maxRent
-    });
+    // Utilisation de l'API officielle de Paris pour les données d'encadrement
+    if (selectedCity.toLowerCase().includes("paris")) {
+      try {
+        // Conversion des valeurs pour l'API
+        const pieceValue = roomCount === "4+" ? "4 pièces et plus" : `${roomCount} pièce${roomCount !== "1" ? "s" : ""}`;
+        const epoqueValue = constructionPeriod === "avant-1946" ? "Avant 1946" :
+                           constructionPeriod === "1946-1970" ? "1946-1970" :
+                           constructionPeriod === "1971-1990" ? "1971-1990" : "Après 1990";
+        const meubleTxt = isFurnished === "meuble" ? "meublé" : "non meublé";
+        
+        const apiUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers/records?where=piece%3D%22${encodeURIComponent(pieceValue)}%22%20AND%20epoque%3D%22${encodeURIComponent(epoqueValue)}%22%20AND%20meuble_txt%3D%22${encodeURIComponent(meubleTxt)}%22&limit=1`;
+        
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+          const result = data.results[0];
+          const maxRentPerM2 = parseFloat(result.max);
+          const maxRent = parseFloat(surface) * maxRentPerM2;
+          const rentNum = parseFloat(rent);
+          
+          setResult({
+            isCompliant: rentNum <= maxRent,
+            maxRent,
+            difference: rentNum - maxRent
+          });
+        } else {
+          // Fallback vers simulation simple si pas de données trouvées
+          const surfaceNum = parseFloat(surface);
+          const rentNum = parseFloat(rent);
+          const maxRentPerM2 = 35; // Prix moyen Paris
+          const maxRent = surfaceNum * maxRentPerM2;
+          
+          setResult({
+            isCompliant: rentNum <= maxRent,
+            maxRent,
+            difference: rentNum - maxRent
+          });
+        }
+      } catch (error) {
+        console.error("Erreur API:", error);
+        // Fallback vers simulation simple
+        const surfaceNum = parseFloat(surface);
+        const rentNum = parseFloat(rent);
+        const maxRentPerM2 = 35;
+        const maxRent = surfaceNum * maxRentPerM2;
+        
+        setResult({
+          isCompliant: rentNum <= maxRent,
+          maxRent,
+          difference: rentNum - maxRent
+        });
+      }
+    } else {
+      // Pour les autres villes, garde la simulation simple
+      const surfaceNum = parseFloat(surface);
+      const rentNum = parseFloat(rent);
+      let maxRentPerM2 = 25;
+      
+      if (constructionPeriod === "avant-1946") maxRentPerM2 *= 0.95;
+      else if (constructionPeriod === "apres-1990") maxRentPerM2 *= 1.05;
+      
+      if (isFurnished === "meuble") maxRentPerM2 *= 1.2;
+      
+      const maxRent = surfaceNum * maxRentPerM2;
+      
+      setResult({
+        isCompliant: rentNum <= maxRent,
+        maxRent,
+        difference: rentNum - maxRent
+      });
+    }
   };
 
   return (
