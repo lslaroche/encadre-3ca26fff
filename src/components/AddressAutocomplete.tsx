@@ -4,11 +4,11 @@ import { Search, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AddressResult {
-  label: string;
   geometry: {
     coordinates: [number, number];
   };
   properties: {
+    label: string;
     city: string;
     postcode: string;
     citycode: string;
@@ -44,7 +44,7 @@ export function AddressAutocomplete({
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5&type=municipality`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5&autocomplete=1`
       );
       const data = await response.json();
       setSuggestions(data.features || []);
@@ -94,7 +94,7 @@ export function AddressAutocomplete({
   };
 
   const handleSuggestionClick = (suggestion: AddressResult) => {
-    onChange(suggestion.properties.city, suggestion);
+    onChange(suggestion.properties.label, suggestion);
     setIsOpen(false);
     setSuggestions([]);
   };
@@ -125,9 +125,9 @@ export function AddressAutocomplete({
             >
               <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               <div>
-                <div className="font-medium">{suggestion.properties.city}</div>
+                <div className="font-medium">{suggestion.properties.label}</div>
                 <div className="text-sm text-muted-foreground">
-                  {suggestion.properties.postcode} • {suggestion.properties.context}
+                  {suggestion.properties.postcode} • {suggestion.properties.city}
                 </div>
               </div>
             </button>
