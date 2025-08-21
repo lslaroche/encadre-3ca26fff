@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,18 +10,47 @@ import { Search, MapPin, Calculator, Info } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const Index = () => {
-  const [location, setLocation] = useState("");
-  const [selectedCity, setSelectedCity] = useState<string>("");
-  const [surface, setSurface] = useState("");
-  const [rent, setRent] = useState("");
-  const [constructionPeriod, setConstructionPeriod] = useState("");
-  const [roomCount, setRoomCount] = useState("");
-  const [isFurnished, setIsFurnished] = useState("");
+  const [location, setLocation] = useState(() => localStorage.getItem('location') || "");
+  const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('selectedCity') || "");
+  const [surface, setSurface] = useState(() => localStorage.getItem('surface') || "");
+  const [rent, setRent] = useState(() => localStorage.getItem('rent') || "");
+  const [constructionPeriod, setConstructionPeriod] = useState(() => localStorage.getItem('constructionPeriod') || "");
+  const [roomCount, setRoomCount] = useState(() => localStorage.getItem('roomCount') || "");
+  const [isFurnished, setIsFurnished] = useState(() => localStorage.getItem('isFurnished') || "");
   const [result, setResult] = useState<{
     isCompliant: boolean;
     maxRent: number;
     difference: number;
   } | null>(null);
+
+  // Sauvegarde automatique dans localStorage
+  useEffect(() => {
+    localStorage.setItem('location', location);
+  }, [location]);
+  
+  useEffect(() => {
+    localStorage.setItem('selectedCity', selectedCity);
+  }, [selectedCity]);
+  
+  useEffect(() => {
+    localStorage.setItem('surface', surface);
+  }, [surface]);
+  
+  useEffect(() => {
+    localStorage.setItem('rent', rent);
+  }, [rent]);
+  
+  useEffect(() => {
+    localStorage.setItem('constructionPeriod', constructionPeriod);
+  }, [constructionPeriod]);
+  
+  useEffect(() => {
+    localStorage.setItem('roomCount', roomCount);
+  }, [roomCount]);
+  
+  useEffect(() => {
+    localStorage.setItem('isFurnished', isFurnished);
+  }, [isFurnished]);
 
   const handleAddressChange = (value: string, result?: any) => {
     setLocation(value);
