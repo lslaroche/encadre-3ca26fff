@@ -67,7 +67,14 @@ const Index = () => {
     // Utilisation de l'API officielle de Paris pour les données d'encadrement
     if (selectedCity.toLowerCase().includes("paris")) {
       try {
-        // Conversion des valeurs pour l'API
+        // D'abord, on fait une requête simple pour voir quelles valeurs existent dans l'API
+        const testUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers/records?limit=5`;
+        const testResponse = await fetch(testUrl);
+        const testData = await testResponse.json();
+        
+        console.log("Exemples de données dans l'API:", testData.results?.slice(0, 3));
+        
+        // Conversion des valeurs pour l'API (à ajuster selon les vraies valeurs)
         const pieceValue = roomCount === "4+" ? "4 pièces et plus" : `${roomCount} pièce${roomCount !== "1" ? "s" : ""}`;
         const epoqueValue = constructionPeriod === "avant-1946" ? "Avant 1946" :
                            constructionPeriod === "1946-1970" ? "1946-1970" :
