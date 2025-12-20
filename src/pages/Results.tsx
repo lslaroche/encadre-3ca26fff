@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MapPin, Home, AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
 import { RentComplianceResult } from "@/services/parisRentApi";
+import { RentScale } from "@/components/RentScale";
 
 interface FormData {
   surface: string;
@@ -139,37 +140,13 @@ const Results = () => {
               )}
             </div>
 
-            {/* Rent breakdown */}
-            <div className="space-y-3 bg-background/50 rounded-lg p-4">
-              <div className="flex justify-between items-center py-2 border-b border-border/50">
-                <div>
-                  <span className="text-sm">Loyer de référence</span>
-                  <span className="text-xs text-muted-foreground ml-2">({result.rentData.ref.toFixed(2)} €/m²)</span>
-                </div>
-                <span className="font-semibold" data-testid="ref-rent">{result.maxAuthorizedRent.toFixed(2)} €</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2 border-b border-border/50 bg-primary/5 -mx-4 px-4">
-                <div>
-                  <span className="text-sm font-medium">Loyer majoré (max autorisé)</span>
-                  <span className="text-xs text-muted-foreground ml-2">({result.rentData.max.toFixed(2)} €/m²)</span>
-                </div>
-                <span className="font-bold text-primary" data-testid="max-rent">{result.maxMajoredRent.toFixed(2)} €</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2 border-b border-border/50">
-                <div>
-                  <span className="text-sm">Loyer minoré</span>
-                  <span className="text-xs text-muted-foreground ml-2">({result.rentData.min.toFixed(2)} €/m²)</span>
-                </div>
-                <span className="font-semibold" data-testid="min-rent">{result.minRent.toFixed(2)} €</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2">
-                <span className="text-sm">Votre loyer</span>
-                <span className="font-semibold" data-testid="current-rent">{result.currentRent.toFixed(2)} €</span>
-              </div>
-            </div>
+            {/* Frise visuelle des loyers */}
+            <RentScale
+              minRent={result.minRent}
+              referenceRent={result.maxAuthorizedRent}
+              maxRent={result.maxMajoredRent}
+              currentRent={result.currentRent}
+            />
 
             {/* Explanation */}
             <div className="mt-4 p-4 bg-background/70 rounded-lg text-sm">
