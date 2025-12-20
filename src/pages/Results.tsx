@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Home, AlertTriangle, CheckCircle, ExternalLink, Calculator } from "lucide-react";
+import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
 import { RentComplianceResult } from "@/services/parisRentApi";
 
 interface FormData {
@@ -50,32 +50,6 @@ const Results = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/20 to-background">
-      {/* Header */}
-      <header className="bg-background/90 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Calculator className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">EncadrementLoyer Paris</h1>
-                <p className="text-sm text-muted-foreground">Vérifiez si votre loyer respecte l'encadrement (données 2025)</p>
-              </div>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate("/")}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour
-            </Button>
-          </div>
-        </div>
-      </header>
-
       {/* Main content */}
       <main className="container mx-auto px-4 py-8 max-w-2xl space-y-6">
         <h1 className="text-2xl font-bold text-foreground">Résultat de votre vérification</h1>
