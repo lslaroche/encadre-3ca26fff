@@ -106,7 +106,7 @@ const Results = () => {
               
               <div className="space-y-1">
                 <div className="text-muted-foreground">Époque</div>
-                <div className="font-medium">{constructionPeriodLabels[formData.constructionPeriod] || formData.constructionPeriod} • {result.rentData.annee}</div>
+                <div className="font-medium">{constructionPeriodLabels[formData.constructionPeriod] || formData.constructionPeriod}</div>
               </div>
             </div>
           </CardContent>
