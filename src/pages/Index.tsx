@@ -6,22 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Search, MapPin, Calculator, Info } from "lucide-react";
-import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { MapPin, Calculator, Info, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { AddressAutocomplete, SelectedAddress } from "@/components/AddressAutocomplete";
+import { fetchRentControl, calculateCompliance, RentComplianceResult } from "@/services/parisRentApi";
 
 const Index = () => {
   const [location, setLocation] = useState(() => localStorage.getItem('location') || "");
-  const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('selectedCity') || "");
+  const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(() => {
+    const saved = localStorage.getItem('selectedAddress');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [surface, setSurface] = useState(() => localStorage.getItem('surface') || "");
   const [rent, setRent] = useState(() => localStorage.getItem('rent') || "");
   const [constructionPeriod, setConstructionPeriod] = useState(() => localStorage.getItem('constructionPeriod') || "");
   const [roomCount, setRoomCount] = useState(() => localStorage.getItem('roomCount') || "");
   const [isFurnished, setIsFurnished] = useState(() => localStorage.getItem('isFurnished') || "");
-  const [result, setResult] = useState<{
-    isCompliant: boolean;
-    maxRent: number;
-    difference: number;
-  } | null>(null);
+  const [result, setResult] = useState<RentComplianceResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Sauvegarde automatique dans localStorage
   useEffect(() => {
@@ -29,8 +31,12 @@ const Index = () => {
   }, [location]);
   
   useEffect(() => {
-    localStorage.setItem('selectedCity', selectedCity);
-  }, [selectedCity]);
+    if (selectedAddress) {
+      localStorage.setItem('selectedAddress', JSON.stringify(selectedAddress));
+    } else {
+      localStorage.removeItem('selectedAddress');
+    }
+  }, [selectedAddress]);
   
   useEffect(() => {
     localStorage.setItem('surface', surface);
@@ -52,136 +58,56 @@ const Index = () => {
     localStorage.setItem('isFurnished', isFurnished);
   }, [isFurnished]);
 
-  const handleAddressChange = (value: string, result?: any) => {
+  const handleAddressChange = (value: string, address?: SelectedAddress) => {
     setLocation(value);
-    if (result) {
-      setSelectedCity(result.properties.city);
+    if (address) {
+      setSelectedAddress(address);
     } else {
-      setSelectedCity("");
+      setSelectedAddress(null);
     }
+    // Reset result when address changes
+    setResult(null);
+    setError(null);
   };
 
   const handleSimulation = async () => {
-    if (!selectedCity || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished) return;
+    if (!selectedAddress || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished) return;
     
-    // Utilisation de l'API officielle de Paris pour les données d'encadrement
-    if (selectedCity.toLowerCase().includes("paris")) {
-      try {
-        // Récupérons d'abord la structure complète de l'API pour voir tous les champs disponibles
-        const schemaUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers`;
-        const schemaResponse = await fetch(schemaUrl);
-        const schemaData = await schemaResponse.json();
-        
-        console.log("Structure complète du dataset:", schemaData);
-        console.log("Champs disponibles:", schemaData.dataset?.fields);
-        
-        // Récupérons quelques exemples pour voir les valeurs exactes
-        const exampleUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers/records?limit=10`;
-        const exampleResponse = await fetch(exampleUrl);
-        const exampleData = await exampleResponse.json();
-        
-        console.log("Exemples de données:", exampleData.results?.slice(0, 5));
-        
-        // Analysons les valeurs uniques pour chaque champ
-        if (exampleData.results?.length > 0) {
-          const uniquePieces = [...new Set(exampleData.results.map(r => r.piece))];
-          const uniqueEpoques = [...new Set(exampleData.results.map(r => r.epoque))];
-          const uniqueMeuble = [...new Set(exampleData.results.map(r => r.meuble_txt))];
-          
-          console.log("Valeurs uniques pour 'piece':", uniquePieces);
-          console.log("Valeurs uniques pour 'epoque':", uniqueEpoques);
-          console.log("Valeurs uniques pour 'meuble_txt':", uniqueMeuble);
-        }
-        
-        // Conversion des valeurs selon la documentation officielle de l'API
-        const pieceValue = roomCount === "4+" ? "4" : roomCount; // Simplement "1", "2", "3", "4"
-        const epoqueValue = constructionPeriod === "avant-1946" ? "Avant 1946" :
-                           constructionPeriod === "1946-1970" ? "1946-1970" :
-                           constructionPeriod === "1971-1990" ? "1971-1990" : "Apres 1990"; // Attention: "Apres" sans accent
-        const meubleTxt = isFurnished === "meuble" ? "meublé" : "non meublé";
-        
-        console.log("Paramètres de recherche:", { pieceValue, epoqueValue, meubleTxt });
-        
-        const apiUrl = `https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/logement-encadrement-des-loyers/records?where=piece%3D%22${encodeURIComponent(pieceValue)}%22%20AND%20epoque%3D%22${encodeURIComponent(epoqueValue)}%22%20AND%20meuble_txt%3D%22${encodeURIComponent(meubleTxt)}%22&limit=1`;
-        
-        console.log("URL API appelée:", apiUrl);
-        
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        
-        console.log("Réponse API complète:", data);
-        console.log("Nombre de résultats:", data.results?.length);
-        
-        if (data.results && data.results.length > 0) {
-          const result = data.results[0];
-          console.log("Premier résultat:", result);
-          console.log("Prix max au m²:", result.max);
-          
-          const maxRentPerM2 = parseFloat(result.max);
-          const maxRent = parseFloat(surface) * maxRentPerM2;
-          const rentNum = parseFloat(rent);
-          
-          console.log("Calculs:", { 
-            surface: parseFloat(surface), 
-            maxRentPerM2, 
-            maxRent, 
-            rentActuel: rentNum, 
-            conforme: rentNum <= maxRent 
-          });
-          
-          setResult({
-            isCompliant: rentNum <= maxRent,
-            maxRent,
-            difference: rentNum - maxRent
-          });
-        } else {
-          console.log("Aucune donnée trouvée, utilisation du fallback");
-          // Fallback vers simulation simple si pas de données trouvées
-          const surfaceNum = parseFloat(surface);
-          const rentNum = parseFloat(rent);
-          const maxRentPerM2 = 35; // Prix moyen Paris
-          const maxRent = surfaceNum * maxRentPerM2;
-          
-          setResult({
-            isCompliant: rentNum <= maxRent,
-            maxRent,
-            difference: rentNum - maxRent
-          });
-        }
-      } catch (error) {
-        console.error("Erreur API:", error);
-        // Fallback vers simulation simple
-        const surfaceNum = parseFloat(surface);
-        const rentNum = parseFloat(rent);
-        const maxRentPerM2 = 35;
-        const maxRent = surfaceNum * maxRentPerM2;
-        
-        setResult({
-          isCompliant: rentNum <= maxRent,
-          maxRent,
-          difference: rentNum - maxRent
-        });
-      }
-    } else {
-      // Pour les autres villes, garde la simulation simple
-      const surfaceNum = parseFloat(surface);
-      const rentNum = parseFloat(rent);
-      let maxRentPerM2 = 25;
-      
-      if (constructionPeriod === "avant-1946") maxRentPerM2 *= 0.95;
-      else if (constructionPeriod === "apres-1990") maxRentPerM2 *= 1.05;
-      
-      if (isFurnished === "meuble") maxRentPerM2 *= 1.2;
-      
-      const maxRent = surfaceNum * maxRentPerM2;
-      
-      setResult({
-        isCompliant: rentNum <= maxRent,
-        maxRent,
-        difference: rentNum - maxRent
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+    
+    try {
+      const rentData = await fetchRentControl({
+        latitude: selectedAddress.latitude,
+        longitude: selectedAddress.longitude,
+        roomCount,
+        constructionPeriod,
+        isFurnished
       });
+      
+      if (!rentData) {
+        setError("Impossible de trouver les données d'encadrement pour cette adresse. Vérifiez que l'adresse est bien à Paris.");
+        return;
+      }
+      
+      const complianceResult = calculateCompliance(
+        rentData,
+        parseFloat(surface),
+        parseFloat(rent)
+      );
+      
+      setResult(complianceResult);
+      
+    } catch (err) {
+      console.error("Erreur:", err);
+      setError("Une erreur s'est produite lors de la vérification. Veuillez réessayer.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const isFormValid = selectedAddress && surface && rent && constructionPeriod && roomCount && isFurnished;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/20 to-background">
@@ -193,8 +119,8 @@ const Index = () => {
               <Calculator className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">EncadrementLoyer</h1>
-              <p className="text-sm text-muted-foreground">Vérifiez si votre loyer respecte l'encadrement</p>
+              <h1 className="text-xl font-bold text-foreground">EncadrementLoyer Paris</h1>
+              <p className="text-sm text-muted-foreground">Vérifiez si votre loyer respecte l'encadrement (données 2025)</p>
             </div>
           </div>
         </div>
@@ -209,36 +135,25 @@ const Index = () => {
               Simulateur d'encadrement des loyers
             </CardTitle>
             <CardDescription>
-              Entrez les informations de votre logement pour vérifier si le loyer respecte l'encadrement en vigueur
+              Entrez l'adresse exacte de votre logement à Paris pour obtenir les données d'encadrement précises de votre quartier.
             </CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-6 pt-6">
             {/* Localisation */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Localisation</label>
+              <Label className="text-sm font-medium">Adresse du logement à Paris</Label>
               <AddressAutocomplete
                 value={location}
                 onChange={handleAddressChange}
-                placeholder="Tapez votre commune..."
+                placeholder="Tapez une adresse à Paris..."
               />
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="text-sm text-muted-foreground">Essayez avec</span>
-                {["Paris", "Lille", "Lyon", "Marseille", "Bordeaux", "Montpellier"].map((city) => (
-                  <Button
-                    key={city}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setLocation(city);
-                      setSelectedCity(city);
-                    }}
-                    className="h-6 px-2 text-xs border-primary/20 hover:bg-primary/10"
-                  >
-                    {city}
-                  </Button>
-                ))}
-              </div>
+              {selectedAddress && (
+                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Adresse sélectionnée : {selectedAddress.postcode} Paris</span>
+                </div>
+              )}
             </div>
 
             {/* Époque de construction */}
@@ -321,37 +236,105 @@ const Index = () => {
 
             <Button 
               onClick={handleSimulation}
-              disabled={!selectedCity || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished}
+              disabled={!isFormValid || isLoading}
               className="w-full bg-primary hover:bg-primary/90"
             >
-              Vérifier l'encadrement
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Vérification en cours...
+                </>
+              ) : (
+                "Vérifier l'encadrement"
+              )}
             </Button>
+
+            {/* Error */}
+            {error && (
+              <Card className="border-2 border-orange-500 bg-orange-50">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 text-orange-700">
+                    <AlertTriangle className="w-5 h-5" />
+                    <span>{error}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Results */}
             {result && (
               <Card className={`border-2 ${result.isCompliant ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
-                    <Badge variant={result.isCompliant ? "default" : "destructive"}>
-                      {result.isCompliant ? "Conforme" : "Non conforme"}
+                    <Badge variant={result.isCompliant ? "default" : "destructive"} className="text-sm px-3 py-1">
+                      {result.isCompliant ? (
+                        <><CheckCircle className="w-4 h-4 mr-1" /> Conforme</>
+                      ) : (
+                        <><AlertTriangle className="w-4 h-4 mr-1" /> Non conforme</>
+                      )}
                     </Badge>
-                    <Info className="w-4 h-4 text-muted-foreground" />
                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Loyer maximum autorisé :</span>
-                      <span className="font-semibold">{result.maxRent.toFixed(2)} €</span>
+                  {/* Quartier info */}
+                  <div className="mb-4 p-3 bg-background/50 rounded-lg">
+                    <div className="text-sm text-muted-foreground mb-1">Quartier identifié</div>
+                    <div className="font-semibold">{result.rentData.quartier}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Données {result.rentData.annee} • {result.rentData.piece} pièce(s) • {result.rentData.epoque} • {result.rentData.meuble}
                     </div>
-                    <div className="flex justify-between">
-                      <span>Votre loyer :</span>
-                      <span className="font-semibold">{rent} €</span>
-                    </div>
-                    {!result.isCompliant && (
-                      <div className="flex justify-between text-red-600">
-                        <span>Dépassement :</span>
-                        <span className="font-semibold">+{result.difference.toFixed(2)} €</span>
+                  </div>
+                  
+                  {/* Rent breakdown */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <div>
+                        <span className="text-sm">Loyer de référence</span>
+                        <span className="text-xs text-muted-foreground ml-2">({result.rentData.ref.toFixed(2)} €/m²)</span>
                       </div>
+                      <span className="font-semibold">{result.maxAuthorizedRent.toFixed(2)} €</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center py-2 border-b bg-primary/5 -mx-4 px-4">
+                      <div>
+                        <span className="text-sm font-medium">Loyer majoré (max autorisé)</span>
+                        <span className="text-xs text-muted-foreground ml-2">({result.rentData.max.toFixed(2)} €/m²)</span>
+                      </div>
+                      <span className="font-bold text-primary">{result.maxMajoredRent.toFixed(2)} €</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <div>
+                        <span className="text-sm">Loyer minoré</span>
+                        <span className="text-xs text-muted-foreground ml-2">({result.rentData.min.toFixed(2)} €/m²)</span>
+                      </div>
+                      <span className="font-semibold">{result.minRent.toFixed(2)} €</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center py-2 border-b">
+                      <span className="text-sm">Votre loyer</span>
+                      <span className="font-semibold">{result.currentRent.toFixed(2)} €</span>
+                    </div>
+                    
+                    {!result.isCompliant && (
+                      <div className="flex justify-between items-center py-2 text-red-600 font-semibold">
+                        <span>Dépassement</span>
+                        <span>+{result.difference.toFixed(2)} €/mois</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Explanation */}
+                  <div className="mt-4 p-3 bg-background/50 rounded-lg text-sm">
+                    {result.isCompliant ? (
+                      <p className="text-green-700">
+                        ✓ Votre loyer de {result.currentRent.toFixed(2)} € est inférieur au loyer majoré de {result.maxMajoredRent.toFixed(2)} €. 
+                        Il respecte l'encadrement des loyers.
+                      </p>
+                    ) : (
+                      <p className="text-red-700">
+                        ✗ Votre loyer dépasse le loyer majoré de {result.difference.toFixed(2)} € par mois. 
+                        Vous pouvez demander une mise en conformité à votre propriétaire.
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -365,12 +348,25 @@ const Index = () => {
           <CardContent className="pt-6">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Info className="w-4 h-4" />
-              À propos de l'encadrement des loyers
+              Comment fonctionne l'encadrement des loyers à Paris ?
             </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              L'encadrement des loyers est un dispositif qui limite le montant des loyers dans certaines zones tendues. 
-              Il vise à rendre le logement plus accessible en fixant des plafonds de loyer au m² selon la localisation et le type de logement.
-            </p>
+            <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
+              <p>
+                L'encadrement des loyers à Paris fixe trois valeurs par m² selon le quartier, le type de logement et l'époque de construction :
+              </p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li><strong>Loyer de référence</strong> : valeur médiane du quartier</li>
+                <li><strong>Loyer majoré (+20%)</strong> : plafond maximum autorisé</li>
+                <li><strong>Loyer minoré (-30%)</strong> : plancher minimum</li>
+              </ul>
+              <p>
+                Votre loyer ne peut pas dépasser le <strong>loyer majoré</strong> sauf si le logement présente des caractéristiques exceptionnelles 
+                (vue, équipements haut de gamme, etc.) justifiant un "complément de loyer".
+              </p>
+              <p className="text-xs mt-4">
+                Source : <a href="https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">OpenData Paris - Données 2025</a>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </main>

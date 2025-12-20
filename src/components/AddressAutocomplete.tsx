@@ -3,9 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface AddressResult {
+export interface AddressResult {
   geometry: {
-    coordinates: [number, number];
+    coordinates: [number, number]; // [longitude, latitude]
   };
   properties: {
     label: string;
@@ -16,9 +16,17 @@ interface AddressResult {
   };
 }
 
+export interface SelectedAddress {
+  label: string;
+  city: string;
+  postcode: string;
+  latitude: number;
+  longitude: number;
+}
+
 interface AddressAutocompleteProps {
   value: string;
-  onChange: (value: string, result?: AddressResult) => void;
+  onChange: (value: string, address?: SelectedAddress) => void;
   placeholder?: string;
   className?: string;
 }
@@ -26,7 +34,7 @@ interface AddressAutocompleteProps {
 export function AddressAutocomplete({
   value,
   onChange,
-  placeholder = "Commune ou Code postal",
+  placeholder = "Tapez une adresse à Paris...",
   className
 }: AddressAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
@@ -43,15 +51,17 @@ export function AddressAutocomplete({
 
     setIsLoading(true);
     try {
+      // Recherche d'adresses avec type=housenumber pour avoir des adresses précises
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber`
       );
       const data = await response.json();
+      
       // Filtrer pour garder uniquement Paris (codes postaux 75xxx)
       const parisResults = (data.features || []).filter((feature: AddressResult) => 
-        feature.properties.postcode?.startsWith("75") || 
-        feature.properties.city?.toLowerCase().includes("paris")
+        feature.properties.postcode?.startsWith("75")
       );
+      
       setSuggestions(parisResults.slice(0, 5));
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
@@ -99,7 +109,19 @@ export function AddressAutocomplete({
   };
 
   const handleSuggestionClick = (suggestion: AddressResult) => {
-    onChange(suggestion.properties.label, suggestion);
+    const [longitude, latitude] = suggestion.geometry.coordinates;
+    
+    const selectedAddress: SelectedAddress = {
+      label: suggestion.properties.label,
+      city: suggestion.properties.city,
+      postcode: suggestion.properties.postcode,
+      latitude,
+      longitude
+    };
+    
+    console.log("📍 Adresse sélectionnée:", selectedAddress);
+    
+    onChange(suggestion.properties.label, selectedAddress);
     setIsOpen(false);
     setSuggestions([]);
   };
@@ -137,6 +159,12 @@ export function AddressAutocomplete({
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {isOpen && value.length >= 3 && suggestions.length === 0 && !isLoading && (
+        <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg p-4 text-center text-muted-foreground text-sm">
+          Aucune adresse trouvée à Paris. Essayez une autre recherche.
         </div>
       )}
     </div>
