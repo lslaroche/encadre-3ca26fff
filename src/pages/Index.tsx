@@ -28,6 +28,28 @@ const Index = () => {
   const [isLoadingEpoque, setIsLoadingEpoque] = useState(false);
   const [autoDetectedPeriod, setAutoDetectedPeriod] = useState<string | null>(null);
 
+  // Auto-détection de l'époque au chargement si adresse présente mais pas d'époque
+  useEffect(() => {
+    const detectConstructionPeriod = async () => {
+      if (selectedAddress && !constructionPeriod) {
+        setIsLoadingEpoque(true);
+        try {
+          const buildingData = await fetchBuildingConstructionPeriod(selectedAddress.latitude, selectedAddress.longitude);
+          if (buildingData.constructionPeriod) {
+            setConstructionPeriod(buildingData.constructionPeriod);
+            setAutoDetectedPeriod(buildingData.apurLabel);
+            console.log('[Index] Époque auto-détectée au chargement:', buildingData);
+          }
+        } catch (err) {
+          console.error('[Index] Erreur auto-détection époque:', err);
+        } finally {
+          setIsLoadingEpoque(false);
+        }
+      }
+    };
+    detectConstructionPeriod();
+  }, []); // Run once on mount
+
   // Sauvegarde automatique dans localStorage
   useEffect(() => {
     localStorage.setItem('location', location);
