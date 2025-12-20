@@ -283,10 +283,9 @@ const Index = () => {
                     data-testid={`room-count-${option.value === "4+" ? "4" : option.value}`}
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
-                      "hover:border-muted-foreground/40 hover:bg-muted/30",
                       roomCount === option.value
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-background"
+                        ? "border-primary bg-primary/20"
+                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40"
                     )}
                   >
                     <span className={cn(
