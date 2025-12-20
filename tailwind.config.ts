@@ -84,11 +84,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'ai-nudge': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(-4px) scale(0.95)'
+					},
+					'50%': {
+						opacity: '1',
+						transform: 'translateY(2px) scale(1.02)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0) scale(1)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'ai-nudge': 'ai-nudge 0.4s ease-out'
 			}
 		}
 	},
