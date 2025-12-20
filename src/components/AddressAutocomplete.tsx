@@ -60,18 +60,19 @@ export function AddressAutocomplete({
 
     setIsLoading(true);
     try {
-      // Recherche d'adresses avec type=housenumber pour avoir des adresses précises
+      // Codes INSEE des 20 arrondissements de Paris (75101 à 75120)
+      const parisCityCodes = Array.from({ length: 20 }, (_, i) => 
+        `751${String(i + 1).padStart(2, '0')}`
+      ).join(',');
+      
+      // Recherche d'adresses avec type=housenumber et filtre sur Paris uniquement
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber&citycode=${parisCityCodes}`
       );
       const data = await response.json();
       
-      // Filtrer pour garder uniquement Paris (codes postaux 75xxx)
-      const parisResults = (data.features || []).filter((feature: AddressResult) => 
-        feature.properties.postcode?.startsWith("75")
-      );
-      
-      setSuggestions(parisResults.slice(0, 5));
+      // L'API ne renvoie que des adresses parisiennes grâce au filtre citycode
+      setSuggestions((data.features || []).slice(0, 5));
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
       setSuggestions([]);
