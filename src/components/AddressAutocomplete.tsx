@@ -43,8 +43,17 @@ export function AddressAutocomplete({
   const debounceRef = useRef<NodeJS.Timeout>();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Extrait la partie "nom de rue" en ignorant le numéro au début
+  const getStreetNamePart = (query: string): string => {
+    return query.replace(/^\d+\s*(bis|ter|quater)?\s*/i, '').trim();
+  };
+
   const searchAddresses = async (query: string) => {
-    if (query.length < 3) {
+    const streetPart = getStreetNamePart(query);
+    
+    // Déclencher si on a au moins 3 caractères de nom de rue
+    // OU si la requête totale fait au moins 5 caractères
+    if (streetPart.length < 3 && query.length < 5) {
       setSuggestions([]);
       return;
     }
