@@ -3,20 +3,17 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Interface pour la réponse de l'API IGN Géoplateforme /completion
-interface CompletionResult {
-  fulltext: string;      // "10 Rue Jean-Jacques Rousseau 75001 Paris"
-  x: number;             // longitude
-  y: number;             // latitude
-  city: string;          // "Paris"
-  zipcode: string;       // "75001"
-  street: string;        // "Rue Jean-Jacques Rousseau"
-  classification: number;
-}
-
-interface CompletionResponse {
-  status: string;
-  results: CompletionResult[];
+export interface AddressResult {
+  geometry: {
+    coordinates: [number, number]; // [longitude, latitude]
+  };
+  properties: {
+    label: string;
+    city: string;
+    postcode: string;
+    citycode: string;
+    context: string;
+  };
 }
 
 export interface SelectedAddress {
@@ -34,16 +31,13 @@ interface AddressAutocompleteProps {
   className?: string;
 }
 
-// API IGN Géoplateforme - Autocomplétion dédiée
-const API_URL = "https://wxs.ign.fr/essentiels/geoportail/geocodage/rest/0.1/completion";
-
 export function AddressAutocomplete({
   value,
   onChange,
   placeholder = "Tapez une adresse à Paris...",
   className
 }: AddressAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<CompletionResult[]>([]);
+  const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
@@ -57,21 +51,19 @@ export function AddressAutocomplete({
 
     setIsLoading(true);
     try {
-      const params = new URLSearchParams({
-        text: query,
-        terr: "75",              // Paris uniquement (département 75)
-        type: "StreetAddress",   // Adresses seulement (pas POI)
-        maximumResponses: "10"
-      });
+      // Recherche d'adresses avec type=housenumber pour avoir des adresses précises
+      // Ajout des coordonnées de Paris pour prioriser les résultats parisiens
+      const response = await fetch(
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber&lat=48.8566&lon=2.3522`
+      );
+      const data = await response.json();
       
-      const response = await fetch(`${API_URL}?${params}`);
+      // Filtrer pour garder uniquement Paris (codes postaux 75xxx)
+      const parisResults = (data.features || []).filter((feature: AddressResult) => 
+        feature.properties.postcode?.startsWith("75")
+      );
       
-      if (!response.ok) {
-        throw new Error(`Erreur API: ${response.status}`);
-      }
-      
-      const data: CompletionResponse = await response.json();
-      setSuggestions(data.results || []);
+      setSuggestions(parisResults.slice(0, 5));
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
       setSuggestions([]);
@@ -117,18 +109,20 @@ export function AddressAutocomplete({
     setIsOpen(true);
   };
 
-  const handleSuggestionClick = (result: CompletionResult) => {
+  const handleSuggestionClick = (suggestion: AddressResult) => {
+    const [longitude, latitude] = suggestion.geometry.coordinates;
+    
     const selectedAddress: SelectedAddress = {
-      label: result.fulltext,
-      city: result.city,
-      postcode: result.zipcode,
-      latitude: result.y,      // y = latitude
-      longitude: result.x      // x = longitude
+      label: suggestion.properties.label,
+      city: suggestion.properties.city,
+      postcode: suggestion.properties.postcode,
+      latitude,
+      longitude
     };
     
     console.log("📍 Adresse sélectionnée:", selectedAddress);
     
-    onChange(result.fulltext, selectedAddress);
+    onChange(suggestion.properties.label, selectedAddress);
     setIsOpen(false);
     setSuggestions([]);
   };
@@ -152,18 +146,18 @@ export function AddressAutocomplete({
 
       {isOpen && suggestions.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-          {suggestions.map((result, index) => (
+          {suggestions.map((suggestion, index) => (
             <button
-              key={`${result.fulltext}-${index}`}
+              key={index}
               className="w-full px-4 py-3 text-left hover:bg-muted/50 flex items-center gap-2 transition-colors"
-              onClick={() => handleSuggestionClick(result)}
+              onClick={() => handleSuggestionClick(suggestion)}
               data-testid="address-suggestion"
             >
               <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               <div>
-                <div className="font-medium">{result.fulltext}</div>
+                <div className="font-medium">{suggestion.properties.label}</div>
                 <div className="text-sm text-muted-foreground">
-                  {result.zipcode} • {result.city}
+                  {suggestion.properties.postcode} • {suggestion.properties.city}
                 </div>
               </div>
             </button>
