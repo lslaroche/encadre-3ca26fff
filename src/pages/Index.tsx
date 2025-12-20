@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { MapPin, Calculator, Info, AlertTriangle, Loader2, Sparkles } from "lucide-react";
+import { Info, AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { AddressAutocomplete, SelectedAddress } from "@/components/AddressAutocomplete";
 import { fetchRentControl, calculateCompliance } from "@/services/parisRentApi";
 import { fetchBuildingConstructionPeriod } from "@/services/apurBuildingApi";
@@ -164,53 +164,19 @@ const Index = () => {
     }
   };
 
-  const handleReset = () => {
-    localStorage.clear();
-    setLocation("");
-    setSelectedAddress(null);
-    setSurface("");
-    setRent("");
-    setConstructionPeriod("");
-    setRoomCount("");
-    setIsFurnished("");
-    setError(null);
-    setAutoDetectedPeriod(null);
-  };
-
   const isFormValid = selectedAddress && surface && rent && constructionPeriod && roomCount && isFurnished;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/20 to-background">
-      {/* Header */}
-      <header className="bg-background/90 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Calculator className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">EncadrementLoyer Paris</h1>
-                <p className="text-sm text-muted-foreground">Vérifiez si votre loyer respecte l'encadrement (données 2025)</p>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground hover:text-foreground">
-              Réinitialiser
-            </Button>
-          </div>
-        </div>
-      </header>
-
       {/* Main content */}
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <Card className="shadow-lg">
           <CardHeader className="bg-secondary/50">
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Simulateur d'encadrement des loyers
+            <CardTitle className="text-2xl font-bold">
+              encadré
             </CardTitle>
-            <CardDescription>
-              Entrez l'adresse exacte de votre logement à Paris pour obtenir les données d'encadrement précises de votre quartier.
+            <CardDescription className="text-base">
+              Vérifiez si votre loyer respecte l'encadrement à Paris (données 2025)
             </CardDescription>
           </CardHeader>
           
