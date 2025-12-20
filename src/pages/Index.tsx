@@ -212,15 +212,6 @@ const Index = () => {
                 onChange={handleAddressChange}
                 placeholder="Tapez une adresse à Paris..."
               />
-              {selectedAddress && (
-                <div 
-                  data-testid="address-selected"
-                  className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Adresse sélectionnée : {selectedAddress.postcode} Paris</span>
-                </div>
-              )}
             </div>
 
             {/* Époque de construction */}
