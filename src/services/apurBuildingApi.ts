@@ -47,9 +47,20 @@ export async function fetchBuildingConstructionPeriod(
   longitude: number
 ): Promise<ApurBuildingData> {
   try {
+    // Créer une enveloppe (bbox) autour du point pour augmenter les chances de toucher un bâtiment
+    // Buffer de ~20 mètres (environ 0.0002 degrés)
+    const buffer = 0.0002;
+    const envelope = {
+      xmin: longitude - buffer,
+      ymin: latitude - buffer,
+      xmax: longitude + buffer,
+      ymax: latitude + buffer,
+      spatialReference: { wkid: 4326 }
+    };
+
     const url = new URL('https://carto2.apur.org/apur/rest/services/OPENDATA/EMPRISE_BATIE_PARIS/MapServer/0/query');
-    url.searchParams.set('geometry', `${longitude},${latitude}`);
-    url.searchParams.set('geometryType', 'esriGeometryPoint');
+    url.searchParams.set('geometry', JSON.stringify(envelope));
+    url.searchParams.set('geometryType', 'esriGeometryEnvelope');
     url.searchParams.set('spatialRel', 'esriSpatialRelIntersects');
     url.searchParams.set('outFields', 'c_perconst');
     url.searchParams.set('returnGeometry', 'false');
