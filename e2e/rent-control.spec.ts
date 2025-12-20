@@ -152,4 +152,55 @@ test.describe('Encadrement des loyers Paris', () => {
     await expect(page.getByTestId('rent-input')).toHaveValue('1100');
     await expect(page.getByTestId('construction-1946-1970')).toBeChecked();
   });
+
+  test('auto-détecte l\'époque de construction via APUR', async ({ page }) => {
+    // Remplir l'adresse (immeuble haussmannien typique)
+    await page.getByTestId('address-input').fill('5 Rue Alasseur 75015 Paris');
+    
+    // Attendre les suggestions et cliquer sur la première
+    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
+    await page.getByTestId('address-suggestion').first().click();
+    
+    // Vérifier que l'adresse est sélectionnée
+    await expect(page.getByTestId('address-selected')).toBeVisible();
+    
+    // Attendre la fin du chargement de l'époque (soit le badge, soit que le loader disparaisse)
+    await page.waitForFunction(
+      () => {
+        const loading = document.querySelector('[data-testid="loading-epoque"]');
+        return !loading;
+      },
+      { timeout: 10000 }
+    );
+    
+    // Vérifier qu'une époque de construction est sélectionnée automatiquement
+    // L'un des radio buttons doit être coché
+    const isAnyPeriodSelected = await page.evaluate(() => {
+      const radios = document.querySelectorAll('[data-testid^="construction-"]');
+      return Array.from(radios).some(r => (r as HTMLInputElement).getAttribute('data-state') === 'checked');
+    });
+    
+    expect(isAnyPeriodSelected).toBe(true);
+  });
+
+  test('permet la sélection manuelle si auto-détection échoue', async ({ page }) => {
+    // Taper une adresse qui pourrait ne pas être trouvée dans APUR
+    await page.getByTestId('address-input').fill('1 Place de la Concorde 75008 Paris');
+    
+    // Attendre les suggestions et cliquer sur la première
+    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
+    await page.getByTestId('address-suggestion').first().click();
+    
+    // Attendre la fin du chargement
+    await page.waitForFunction(
+      () => !document.querySelector('[data-testid="loading-epoque"]'),
+      { timeout: 10000 }
+    );
+    
+    // Sélectionner manuellement une époque
+    await page.getByTestId('construction-avant-1946').click();
+    
+    // Vérifier que la sélection manuelle fonctionne
+    await expect(page.getByTestId('construction-avant-1946')).toBeChecked();
+  });
 });
