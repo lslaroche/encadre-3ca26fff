@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -268,20 +269,40 @@ const Index = () => {
             {/* Nombre de pièces */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Nombre de pièces</Label>
-              <Select value={roomCount} onValueChange={setRoomCount}>
-                <SelectTrigger 
-                  className="bg-muted/50 border-primary/20 focus:border-primary"
-                  data-testid="room-count-trigger"
-                >
-                  <SelectValue placeholder="Sélectionnez le nombre de pièces" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1" data-testid="room-count-1">1 pièce</SelectItem>
-                  <SelectItem value="2" data-testid="room-count-2">2 pièces</SelectItem>
-                  <SelectItem value="3" data-testid="room-count-3">3 pièces</SelectItem>
-                  <SelectItem value="4+" data-testid="room-count-4">4 pièces et plus</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "1", label: "1 pièce" },
+                  { value: "2", label: "2 pièces" },
+                  { value: "3", label: "3 pièces" },
+                  { value: "4+", label: "4+ pièces" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setRoomCount(option.value)}
+                    data-testid={`room-count-${option.value === "4+" ? "4" : option.value}`}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
+                      "hover:border-muted-foreground/40 hover:bg-muted/30",
+                      roomCount === option.value
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background"
+                    )}
+                  >
+                    <span className={cn(
+                      "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                      roomCount === option.value
+                        ? "border-primary"
+                        : "border-muted-foreground/40"
+                    )}>
+                      {roomCount === option.value && (
+                        <span className="w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </span>
+                    <span className="text-sm">{option.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Type de location */}
