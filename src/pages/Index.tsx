@@ -149,7 +149,10 @@ const Index = () => {
                 placeholder="Tapez une adresse à Paris..."
               />
               {selectedAddress && (
-                <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                <div 
+                  data-testid="address-selected"
+                  className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md"
+                >
                   <CheckCircle className="w-4 h-4" />
                   <span>Adresse sélectionnée : {selectedAddress.postcode} Paris</span>
                 </div>
@@ -161,19 +164,19 @@ const Index = () => {
               <Label className="text-sm font-medium">Époque de construction</Label>
               <RadioGroup value={constructionPeriod} onValueChange={setConstructionPeriod}>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="avant-1946" id="avant-1946" />
+                  <RadioGroupItem value="avant-1946" id="avant-1946" data-testid="construction-avant-1946" />
                   <Label htmlFor="avant-1946">Avant 1946</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1946-1970" id="1946-1970" />
+                  <RadioGroupItem value="1946-1970" id="1946-1970" data-testid="construction-1946-1970" />
                   <Label htmlFor="1946-1970">1946-1970</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1971-1990" id="1971-1990" />
+                  <RadioGroupItem value="1971-1990" id="1971-1990" data-testid="construction-1971-1990" />
                   <Label htmlFor="1971-1990">1971-1990</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="apres-1990" id="apres-1990" />
+                  <RadioGroupItem value="apres-1990" id="apres-1990" data-testid="construction-apres-1990" />
                   <Label htmlFor="apres-1990">Après 1990</Label>
                 </div>
               </RadioGroup>
@@ -183,14 +186,17 @@ const Index = () => {
             <div className="space-y-2">
               <Label className="text-sm font-medium">Nombre de pièces</Label>
               <Select value={roomCount} onValueChange={setRoomCount}>
-                <SelectTrigger className="bg-muted/50 border-primary/20 focus:border-primary">
+                <SelectTrigger 
+                  className="bg-muted/50 border-primary/20 focus:border-primary"
+                  data-testid="room-count-trigger"
+                >
                   <SelectValue placeholder="Sélectionnez le nombre de pièces" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 pièce</SelectItem>
-                  <SelectItem value="2">2 pièces</SelectItem>
-                  <SelectItem value="3">3 pièces</SelectItem>
-                  <SelectItem value="4+">4 pièces et plus</SelectItem>
+                  <SelectItem value="1" data-testid="room-count-1">1 pièce</SelectItem>
+                  <SelectItem value="2" data-testid="room-count-2">2 pièces</SelectItem>
+                  <SelectItem value="3" data-testid="room-count-3">3 pièces</SelectItem>
+                  <SelectItem value="4+" data-testid="room-count-4">4 pièces et plus</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -200,11 +206,11 @@ const Index = () => {
               <Label className="text-sm font-medium">Type de location</Label>
               <RadioGroup value={isFurnished} onValueChange={setIsFurnished}>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="non-meuble" id="non-meuble" />
+                  <RadioGroupItem value="non-meuble" id="non-meuble" data-testid="furnished-no" />
                   <Label htmlFor="non-meuble">Non meublé</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="meuble" id="meuble" />
+                  <RadioGroupItem value="meuble" id="meuble" data-testid="furnished-yes" />
                   <Label htmlFor="meuble">Meublé</Label>
                 </div>
               </RadioGroup>
@@ -219,6 +225,7 @@ const Index = () => {
                 value={surface}
                 onChange={(e) => setSurface(e.target.value)}
                 className="bg-muted/50 border-primary/20 focus:border-primary"
+                data-testid="surface-input"
               />
             </div>
 
@@ -231,6 +238,7 @@ const Index = () => {
                 value={rent}
                 onChange={(e) => setRent(e.target.value)}
                 className="bg-muted/50 border-primary/20 focus:border-primary"
+                data-testid="rent-input"
               />
             </div>
 
@@ -238,6 +246,7 @@ const Index = () => {
               onClick={handleSimulation}
               disabled={!isFormValid || isLoading}
               className="w-full bg-primary hover:bg-primary/90"
+              data-testid="simulate-button"
             >
               {isLoading ? (
                 <>
@@ -251,7 +260,7 @@ const Index = () => {
 
             {/* Error */}
             {error && (
-              <Card className="border-2 border-orange-500 bg-orange-50">
+              <Card className="border-2 border-orange-500 bg-orange-50" data-testid="error-message">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 text-orange-700">
                     <AlertTriangle className="w-5 h-5" />
@@ -263,10 +272,17 @@ const Index = () => {
 
             {/* Results */}
             {result && (
-              <Card className={`border-2 ${result.isCompliant ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+              <Card 
+                className={`border-2 ${result.isCompliant ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}
+                data-testid="result-card"
+              >
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
-                    <Badge variant={result.isCompliant ? "default" : "destructive"} className="text-sm px-3 py-1">
+                    <Badge 
+                      variant={result.isCompliant ? "default" : "destructive"} 
+                      className="text-sm px-3 py-1"
+                      data-testid="compliance-badge"
+                    >
                       {result.isCompliant ? (
                         <><CheckCircle className="w-4 h-4 mr-1" /> Conforme</>
                       ) : (
@@ -278,7 +294,7 @@ const Index = () => {
                   {/* Quartier info */}
                   <div className="mb-4 p-3 bg-background/50 rounded-lg">
                     <div className="text-sm text-muted-foreground mb-1">Quartier identifié</div>
-                    <div className="font-semibold">{result.rentData.quartier}</div>
+                    <div className="font-semibold" data-testid="quartier-name">{result.rentData.quartier}</div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Données {result.rentData.annee} • {result.rentData.piece} pièce(s) • {result.rentData.epoque} • {result.rentData.meuble}
                     </div>
@@ -291,7 +307,7 @@ const Index = () => {
                         <span className="text-sm">Loyer de référence</span>
                         <span className="text-xs text-muted-foreground ml-2">({result.rentData.ref.toFixed(2)} €/m²)</span>
                       </div>
-                      <span className="font-semibold">{result.maxAuthorizedRent.toFixed(2)} €</span>
+                      <span className="font-semibold" data-testid="ref-rent">{result.maxAuthorizedRent.toFixed(2)} €</span>
                     </div>
                     
                     <div className="flex justify-between items-center py-2 border-b bg-primary/5 -mx-4 px-4">
@@ -299,7 +315,7 @@ const Index = () => {
                         <span className="text-sm font-medium">Loyer majoré (max autorisé)</span>
                         <span className="text-xs text-muted-foreground ml-2">({result.rentData.max.toFixed(2)} €/m²)</span>
                       </div>
-                      <span className="font-bold text-primary">{result.maxMajoredRent.toFixed(2)} €</span>
+                      <span className="font-bold text-primary" data-testid="max-rent">{result.maxMajoredRent.toFixed(2)} €</span>
                     </div>
                     
                     <div className="flex justify-between items-center py-2 border-b">
@@ -307,16 +323,16 @@ const Index = () => {
                         <span className="text-sm">Loyer minoré</span>
                         <span className="text-xs text-muted-foreground ml-2">({result.rentData.min.toFixed(2)} €/m²)</span>
                       </div>
-                      <span className="font-semibold">{result.minRent.toFixed(2)} €</span>
+                      <span className="font-semibold" data-testid="min-rent">{result.minRent.toFixed(2)} €</span>
                     </div>
                     
                     <div className="flex justify-between items-center py-2 border-b">
                       <span className="text-sm">Votre loyer</span>
-                      <span className="font-semibold">{result.currentRent.toFixed(2)} €</span>
+                      <span className="font-semibold" data-testid="current-rent">{result.currentRent.toFixed(2)} €</span>
                     </div>
                     
                     {!result.isCompliant && (
-                      <div className="flex justify-between items-center py-2 text-red-600 font-semibold">
+                      <div className="flex justify-between items-center py-2 text-red-600 font-semibold" data-testid="rent-difference">
                         <span>Dépassement</span>
                         <span>+{result.difference.toFixed(2)} €/mois</span>
                       </div>

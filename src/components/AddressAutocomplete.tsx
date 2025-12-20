@@ -136,6 +136,7 @@ export function AddressAutocomplete({
           onChange={handleInputChange}
           onFocus={() => value && suggestions.length > 0 && setIsOpen(true)}
           className={cn("pl-10 bg-muted/50 border-primary/20 focus:border-primary", className)}
+          data-testid="address-input"
         />
         {isLoading && (
           <div className="absolute right-3 top-3 w-4 h-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -149,6 +150,7 @@ export function AddressAutocomplete({
               key={index}
               className="w-full px-4 py-3 text-left hover:bg-muted/50 flex items-center gap-2 transition-colors"
               onClick={() => handleSuggestionClick(suggestion)}
+              data-testid="address-suggestion"
             >
               <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               <div>
