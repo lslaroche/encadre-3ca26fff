@@ -154,12 +154,7 @@ export function AddressAutocomplete({
               data-testid="address-suggestion"
             >
               <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              <div>
-                <div className="font-medium">{suggestion.properties.label}</div>
-                <div className="text-sm text-muted-foreground">
-                  {suggestion.properties.postcode} • {suggestion.properties.city}
-                </div>
-              </div>
+              <span className="font-medium">{suggestion.properties.label}</span>
             </button>
           ))}
         </div>
