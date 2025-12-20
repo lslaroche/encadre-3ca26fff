@@ -240,30 +240,42 @@ const Index = () => {
                   </Badge>
                 )}
               </div>
-              <RadioGroup 
-                value={constructionPeriod} 
-                onValueChange={(value) => {
-                  setConstructionPeriod(value);
-                  setAutoDetectedPeriod(null); // Clear auto-detected if user changes manually
-                }}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="avant-1946" id="avant-1946" data-testid="construction-avant-1946" />
-                  <Label htmlFor="avant-1946">Avant 1946</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1946-1970" id="1946-1970" data-testid="construction-1946-1970" />
-                  <Label htmlFor="1946-1970">1946-1970</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1971-1990" id="1971-1990" data-testid="construction-1971-1990" />
-                  <Label htmlFor="1971-1990">1971-1990</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="apres-1990" id="apres-1990" data-testid="construction-apres-1990" />
-                  <Label htmlFor="apres-1990">Après 1990</Label>
-                </div>
-              </RadioGroup>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "avant-1946", label: "Avant 1946" },
+                  { value: "1946-1970", label: "1946-1970" },
+                  { value: "1971-1990", label: "1971-1990" },
+                  { value: "apres-1990", label: "Après 1990" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setConstructionPeriod(option.value);
+                      setAutoDetectedPeriod(null);
+                    }}
+                    data-testid={`construction-${option.value}`}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
+                      constructionPeriod === option.value
+                        ? "border-primary bg-primary/20"
+                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40"
+                    )}
+                  >
+                    <span className={cn(
+                      "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                      constructionPeriod === option.value
+                        ? "border-primary"
+                        : "border-muted-foreground/40"
+                    )}>
+                      {constructionPeriod === option.value && (
+                        <span className="w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </span>
+                    <span className="text-sm">{option.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Nombre de pièces */}
@@ -307,16 +319,37 @@ const Index = () => {
             {/* Type de location */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Type de location</Label>
-              <RadioGroup value={isFurnished} onValueChange={setIsFurnished}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="non-meuble" id="non-meuble" data-testid="furnished-no" />
-                  <Label htmlFor="non-meuble">Non meublé</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="meuble" id="meuble" data-testid="furnished-yes" />
-                  <Label htmlFor="meuble">Meublé</Label>
-                </div>
-              </RadioGroup>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "non-meuble", label: "Non meublé" },
+                  { value: "meuble", label: "Meublé" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setIsFurnished(option.value)}
+                    data-testid={option.value === "meuble" ? "furnished-yes" : "furnished-no"}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
+                      isFurnished === option.value
+                        ? "border-primary bg-primary/20"
+                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40"
+                    )}
+                  >
+                    <span className={cn(
+                      "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                      isFurnished === option.value
+                        ? "border-primary"
+                        : "border-muted-foreground/40"
+                    )}>
+                      {isFurnished === option.value && (
+                        <span className="w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </span>
+                    <span className="text-sm">{option.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Surface */}
