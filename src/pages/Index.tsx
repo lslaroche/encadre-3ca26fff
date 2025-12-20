@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { MapPin, Calculator, Info, AlertTriangle, CheckCircle, Loader2, Sparkles } from "lucide-react";
+import { MapPin, Calculator, Info, AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { AddressAutocomplete, SelectedAddress } from "@/components/AddressAutocomplete";
-import { fetchRentControl, calculateCompliance, RentComplianceResult } from "@/services/parisRentApi";
+import { fetchRentControl, calculateCompliance } from "@/services/parisRentApi";
 import { fetchBuildingConstructionPeriod } from "@/services/apurBuildingApi";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [location, setLocation] = useState(() => localStorage.getItem('location') || "");
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(() => {
     const saved = localStorage.getItem('selectedAddress');
@@ -23,7 +23,6 @@ const Index = () => {
   const [constructionPeriod, setConstructionPeriod] = useState(() => localStorage.getItem('constructionPeriod') || "");
   const [roomCount, setRoomCount] = useState(() => localStorage.getItem('roomCount') || "");
   const [isFurnished, setIsFurnished] = useState(() => localStorage.getItem('isFurnished') || "");
-  const [result, setResult] = useState<RentComplianceResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingEpoque, setIsLoadingEpoque] = useState(false);
@@ -110,8 +109,6 @@ const Index = () => {
       setSelectedAddress(null);
       setAutoDetectedPeriod(null);
     }
-    // Reset result when address changes
-    setResult(null);
     setError(null);
   };
 
@@ -120,7 +117,6 @@ const Index = () => {
     
     setIsLoading(true);
     setError(null);
-    setResult(null);
     
     try {
       const rentData = await fetchRentControl({
@@ -142,7 +138,23 @@ const Index = () => {
         parseFloat(rent)
       );
       
-      setResult(complianceResult);
+      // Navigate to results page with data
+      navigate("/resultats", {
+        state: {
+          result: complianceResult,
+          formData: {
+            surface,
+            rent,
+            selectedAddress: {
+              label: selectedAddress.label,
+              postcode: selectedAddress.postcode,
+            },
+            constructionPeriod,
+            roomCount,
+            isFurnished,
+          },
+        },
+      });
       
     } catch (err) {
       console.error("Erreur:", err);
@@ -161,7 +173,6 @@ const Index = () => {
     setConstructionPeriod("");
     setRoomCount("");
     setIsFurnished("");
-    setResult(null);
     setError(null);
     setAutoDetectedPeriod(null);
   };
@@ -397,92 +408,6 @@ const Index = () => {
               </Card>
             )}
 
-            {/* Results */}
-            {result && (
-              <Card 
-                className={`border-2 ${result.isCompliant ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}
-                data-testid="result-card"
-              >
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <Badge 
-                      variant={result.isCompliant ? "default" : "destructive"} 
-                      className="text-sm px-3 py-1"
-                      data-testid="compliance-badge"
-                    >
-                      {result.isCompliant ? (
-                        <><CheckCircle className="w-4 h-4 mr-1" /> Conforme</>
-                      ) : (
-                        <><AlertTriangle className="w-4 h-4 mr-1" /> Non conforme</>
-                      )}
-                    </Badge>
-                  </div>
-                  
-                  {/* Quartier info */}
-                  <div className="mb-4 p-3 bg-background/50 rounded-lg">
-                    <div className="text-sm text-muted-foreground mb-1">Quartier identifié</div>
-                    <div className="font-semibold" data-testid="quartier-name">{result.rentData.quartier}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Données {result.rentData.annee} • {result.rentData.piece} pièce(s) • {result.rentData.epoque} • {result.rentData.meuble}
-                    </div>
-                  </div>
-                  
-                  {/* Rent breakdown */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <div>
-                        <span className="text-sm">Loyer de référence</span>
-                        <span className="text-xs text-muted-foreground ml-2">({result.rentData.ref.toFixed(2)} €/m²)</span>
-                      </div>
-                      <span className="font-semibold" data-testid="ref-rent">{result.maxAuthorizedRent.toFixed(2)} €</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-2 border-b bg-primary/5 -mx-4 px-4">
-                      <div>
-                        <span className="text-sm font-medium">Loyer majoré (max autorisé)</span>
-                        <span className="text-xs text-muted-foreground ml-2">({result.rentData.max.toFixed(2)} €/m²)</span>
-                      </div>
-                      <span className="font-bold text-primary" data-testid="max-rent">{result.maxMajoredRent.toFixed(2)} €</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <div>
-                        <span className="text-sm">Loyer minoré</span>
-                        <span className="text-xs text-muted-foreground ml-2">({result.rentData.min.toFixed(2)} €/m²)</span>
-                      </div>
-                      <span className="font-semibold" data-testid="min-rent">{result.minRent.toFixed(2)} €</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-2 border-b">
-                      <span className="text-sm">Votre loyer</span>
-                      <span className="font-semibold" data-testid="current-rent">{result.currentRent.toFixed(2)} €</span>
-                    </div>
-                    
-                    {!result.isCompliant && (
-                      <div className="flex justify-between items-center py-2 text-red-600 font-semibold" data-testid="rent-difference">
-                        <span>Dépassement</span>
-                        <span>+{result.difference.toFixed(2)} €/mois</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Explanation */}
-                  <div className="mt-4 p-3 bg-background/50 rounded-lg text-sm">
-                    {result.isCompliant ? (
-                      <p className="text-green-700">
-                        ✓ Votre loyer de {result.currentRent.toFixed(2)} € est inférieur au loyer majoré de {result.maxMajoredRent.toFixed(2)} €. 
-                        Il respecte l'encadrement des loyers.
-                      </p>
-                    ) : (
-                      <p className="text-red-700">
-                        ✗ Votre loyer dépasse le loyer majoré de {result.difference.toFixed(2)} € par mois. 
-                        Vous pouvez demander une mise en conformité à votre propriétaire.
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </CardContent>
         </Card>
 
