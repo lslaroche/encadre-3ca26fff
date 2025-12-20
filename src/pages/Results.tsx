@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
 import { RentComplianceResult } from "@/services/parisRentApi";
@@ -51,11 +51,20 @@ const Results = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/20 to-background">
       {/* Main content */}
-      <main className="container mx-auto px-4 py-8 max-w-2xl space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Résultat de votre vérification</h1>
-
-        {/* Carte 1 : Votre situation */}
-        <Card className="shadow-sm">
+      <main className="container mx-auto px-4 py-8 max-w-2xl">
+        <Card className="shadow-lg">
+          <CardHeader className="bg-secondary/50">
+            <CardTitle className="text-2xl font-bold">
+              🔳 encadré
+            </CardTitle>
+            <CardDescription className="text-base">
+              Vérifiez si votre loyer respecte l'encadrement à Paris (données 2025)
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6 pt-6">
+            {/* Carte 1 : Votre situation */}
+            <Card className="shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-4">
               <MapPin className="w-5 h-5 text-primary" />
@@ -203,17 +212,19 @@ const Results = () => {
           </Card>
         )}
 
-        {/* Bouton retour */}
-        <div className="pt-4">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/")}
-            className="w-full"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Modifier ma recherche
-          </Button>
-        </div>
+            {/* Bouton retour */}
+            <div className="pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/")}
+                className="w-full"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Modifier ma recherche
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
