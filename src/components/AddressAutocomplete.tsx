@@ -43,36 +43,26 @@ export function AddressAutocomplete({
   const debounceRef = useRef<NodeJS.Timeout>();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Extrait la partie "nom de rue" en ignorant le numéro au début
-  const getStreetNamePart = (query: string): string => {
-    return query.replace(/^\d+\s*(bis|ter|quater)?\s*/i, '').trim();
-  };
-
   const searchAddresses = async (query: string) => {
-    const streetPart = getStreetNamePart(query);
-    
-    // Déclencher si on a au moins 3 caractères de nom de rue
-    // OU si la requête totale fait au moins 5 caractères
-    if (streetPart.length < 3 && query.length < 5) {
+    if (query.length < 3) {
       setSuggestions([]);
       return;
     }
 
     setIsLoading(true);
     try {
-      // Codes INSEE des 20 arrondissements de Paris (75101 à 75120)
-      const parisCityCodes = Array.from({ length: 20 }, (_, i) => 
-        `751${String(i + 1).padStart(2, '0')}`
-      ).join(',');
-      
-      // Recherche d'adresses avec type=housenumber et filtre sur Paris uniquement
+      // Recherche d'adresses avec type=housenumber pour avoir des adresses précises
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber&citycode=${parisCityCodes}`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber`
       );
       const data = await response.json();
       
-      // L'API ne renvoie que des adresses parisiennes grâce au filtre citycode
-      setSuggestions((data.features || []).slice(0, 5));
+      // Filtrer pour garder uniquement Paris (codes postaux 75xxx)
+      const parisResults = (data.features || []).filter((feature: AddressResult) => 
+        feature.properties.postcode?.startsWith("75")
+      );
+      
+      setSuggestions(parisResults.slice(0, 5));
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
       setSuggestions([]);
