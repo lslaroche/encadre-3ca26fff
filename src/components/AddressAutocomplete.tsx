@@ -3,29 +3,20 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Interface pour la réponse de l'API Géoplateforme /search (format GeoJSON)
-interface GeocodageFeature {
-  type: "Feature";
-  geometry: {
-    type: "Point";
-    coordinates: [number, number]; // [longitude, latitude]
-  };
-  properties: {
-    label: string;
-    score: number;
-    housenumber?: string;
-    street?: string;
-    postcode: string;
-    citycode: string;
-    city: string;
-    context: string;
-    id: string;
-  };
+// Interface pour la réponse de l'API IGN Géoplateforme /completion
+interface CompletionResult {
+  fulltext: string;      // "10 Rue Jean-Jacques Rousseau 75001 Paris"
+  x: number;             // longitude
+  y: number;             // latitude
+  city: string;          // "Paris"
+  zipcode: string;       // "75001"
+  street: string;        // "Rue Jean-Jacques Rousseau"
+  classification: number;
 }
 
-interface GeocodageResponse {
-  type: "FeatureCollection";
-  features: GeocodageFeature[];
+interface CompletionResponse {
+  status: string;
+  results: CompletionResult[];
 }
 
 export interface SelectedAddress {
@@ -43,11 +34,8 @@ interface AddressAutocompleteProps {
   className?: string;
 }
 
-// Codes INSEE des 20 arrondissements de Paris
-const PARIS_CITY_CODES = Array.from(
-  { length: 20 },
-  (_, i) => `751${(i + 1).toString().padStart(2, '0')}`
-).join(',');
+// API IGN Géoplateforme - Autocomplétion dédiée
+const API_URL = "https://wxs.ign.fr/essentiels/geoportail/geocodage/rest/0.1/completion";
 
 export function AddressAutocomplete({
   value,
@@ -55,7 +43,7 @@ export function AddressAutocomplete({
   placeholder = "Tapez une adresse à Paris...",
   className
 }: AddressAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<GeocodageFeature[]>([]);
+  const [suggestions, setSuggestions] = useState<CompletionResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
@@ -69,19 +57,21 @@ export function AddressAutocomplete({
 
     setIsLoading(true);
     try {
-      // API Géoplateforme /search avec mode autocomplete (activé par défaut)
-      // index=address pour les adresses uniquement
-      // citycode filtre sur les 20 arrondissements de Paris
-      const response = await fetch(
-        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(query)}&index=address&limit=10&citycode=${PARIS_CITY_CODES}`
-      );
+      const params = new URLSearchParams({
+        text: query,
+        terr: "75",              // Paris uniquement (département 75)
+        type: "StreetAddress",   // Adresses seulement (pas POI)
+        maximumResponses: "10"
+      });
+      
+      const response = await fetch(`${API_URL}?${params}`);
       
       if (!response.ok) {
         throw new Error(`Erreur API: ${response.status}`);
       }
       
-      const data: GeocodageResponse = await response.json();
-      setSuggestions(data.features || []);
+      const data: CompletionResponse = await response.json();
+      setSuggestions(data.results || []);
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
       setSuggestions([]);
@@ -127,20 +117,18 @@ export function AddressAutocomplete({
     setIsOpen(true);
   };
 
-  const handleSuggestionClick = (feature: GeocodageFeature) => {
-    const [longitude, latitude] = feature.geometry.coordinates;
-    
+  const handleSuggestionClick = (result: CompletionResult) => {
     const selectedAddress: SelectedAddress = {
-      label: feature.properties.label,
-      city: feature.properties.city,
-      postcode: feature.properties.postcode,
-      latitude,
-      longitude
+      label: result.fulltext,
+      city: result.city,
+      postcode: result.zipcode,
+      latitude: result.y,      // y = latitude
+      longitude: result.x      // x = longitude
     };
     
     console.log("📍 Adresse sélectionnée:", selectedAddress);
     
-    onChange(feature.properties.label, selectedAddress);
+    onChange(result.fulltext, selectedAddress);
     setIsOpen(false);
     setSuggestions([]);
   };
@@ -164,18 +152,18 @@ export function AddressAutocomplete({
 
       {isOpen && suggestions.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-          {suggestions.map((feature, index) => (
+          {suggestions.map((result, index) => (
             <button
-              key={feature.properties.id || index}
+              key={`${result.fulltext}-${index}`}
               className="w-full px-4 py-3 text-left hover:bg-muted/50 flex items-center gap-2 transition-colors"
-              onClick={() => handleSuggestionClick(feature)}
+              onClick={() => handleSuggestionClick(result)}
               data-testid="address-suggestion"
             >
               <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               <div>
-                <div className="font-medium">{feature.properties.label}</div>
+                <div className="font-medium">{result.fulltext}</div>
                 <div className="text-sm text-muted-foreground">
-                  {feature.properties.postcode} • {feature.properties.city}
+                  {result.zipcode} • {result.city}
                 </div>
               </div>
             </button>
