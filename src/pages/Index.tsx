@@ -236,7 +236,7 @@ const Index = () => {
                   </div>
                 )}
                 {autoDetectedPeriod && !isLoadingEpoque && (
-                  <Badge variant="secondary" className="text-xs flex items-center gap-1" data-testid="auto-detected-badge">
+                  <Badge variant="secondary" className="text-xs flex items-center gap-1 animate-ai-nudge" data-testid="auto-detected-badge">
                     <Sparkles className="w-3 h-3" />
                     Auto-détecté : {autoDetectedPeriod}
                   </Badge>
