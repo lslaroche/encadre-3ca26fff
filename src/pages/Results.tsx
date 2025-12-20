@@ -93,15 +93,15 @@ const Results = () => {
               </div>
               
               <div className="space-y-1">
+                <div className="text-muted-foreground">Construction</div>
+                <div className="font-medium">{constructionPeriodLabels[formData.constructionPeriod] || formData.constructionPeriod}</div>
+              </div>
+              
+              <div className="space-y-1">
                 <div className="text-muted-foreground">Type</div>
                 <div className="font-medium">
                   {formData.isFurnished === "meuble" ? "Meublé" : "Non meublé"} • {formData.roomCount === "4+" ? "4+ pièces" : `${formData.roomCount} pièce${formData.roomCount !== "1" ? "s" : ""}`}
                 </div>
-              </div>
-              
-              <div className="space-y-1">
-                <div className="text-muted-foreground">Construction</div>
-                <div className="font-medium">{constructionPeriodLabels[formData.constructionPeriod] || formData.constructionPeriod}</div>
               </div>
             </div>
           </CardContent>
