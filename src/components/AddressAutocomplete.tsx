@@ -52,8 +52,9 @@ export function AddressAutocomplete({
     setIsLoading(true);
     try {
       // Recherche d'adresses avec type=housenumber pour avoir des adresses précises
+      // Ajout des coordonnées de Paris pour prioriser les résultats parisiens
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber&lat=48.8566&lon=2.3522`
       );
       const data = await response.json();
       
