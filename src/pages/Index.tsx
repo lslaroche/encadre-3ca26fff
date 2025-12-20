@@ -151,6 +151,20 @@ const Index = () => {
     }
   };
 
+  const handleReset = () => {
+    localStorage.clear();
+    setLocation("");
+    setSelectedAddress(null);
+    setSurface("");
+    setRent("");
+    setConstructionPeriod("");
+    setRoomCount("");
+    setIsFurnished("");
+    setResult(null);
+    setError(null);
+    setAutoDetectedPeriod(null);
+  };
+
   const isFormValid = selectedAddress && surface && rent && constructionPeriod && roomCount && isFurnished;
 
   return (
@@ -158,14 +172,19 @@ const Index = () => {
       {/* Header */}
       <header className="bg-background/90 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Calculator className="w-6 h-6 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Calculator className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">EncadrementLoyer Paris</h1>
+                <p className="text-sm text-muted-foreground">Vérifiez si votre loyer respecte l'encadrement (données 2025)</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">EncadrementLoyer Paris</h1>
-              <p className="text-sm text-muted-foreground">Vérifiez si votre loyer respecte l'encadrement (données 2025)</p>
-            </div>
+            <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground hover:text-foreground">
+              Réinitialiser
+            </Button>
           </div>
         </div>
       </header>
