@@ -98,16 +98,16 @@ const Results = () => {
                   {formData.isFurnished === "meuble" ? "Meublé" : "Non meublé"} • {formData.roomCount === "4+" ? "4+ pièces" : `${formData.roomCount} pièce${formData.roomCount !== "1" ? "s" : ""}`}
                 </div>
               </div>
-            </div>
-
-            <div className="mt-4 pt-4 border-t flex items-center gap-2 text-sm">
-              <Home className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Quartier identifié :</span>
-              <span className="font-medium">{result.rentData.quartier}</span>
-            </div>
-            
-            <div className="mt-2 text-xs text-muted-foreground">
-              {constructionPeriodLabels[formData.constructionPeriod] || formData.constructionPeriod} • Données {result.rentData.annee}
+              
+              <div className="space-y-1">
+                <div className="text-muted-foreground">Quartier</div>
+                <div className="font-medium">{result.rentData.quartier}</div>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="text-muted-foreground">Époque</div>
+                <div className="font-medium">{constructionPeriodLabels[formData.constructionPeriod] || formData.constructionPeriod} • {result.rentData.annee}</div>
+              </div>
             </div>
           </CardContent>
         </Card>
