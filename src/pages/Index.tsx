@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { MapPin, Calculator, Info, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { MapPin, Calculator, Info, AlertTriangle, CheckCircle, Loader2, Sparkles } from "lucide-react";
 import { AddressAutocomplete, SelectedAddress } from "@/components/AddressAutocomplete";
 import { fetchRentControl, calculateCompliance, RentComplianceResult } from "@/services/parisRentApi";
+import { fetchBuildingConstructionPeriod } from "@/services/apurBuildingApi";
 
 const Index = () => {
   const [location, setLocation] = useState(() => localStorage.getItem('location') || "");
@@ -24,6 +25,8 @@ const Index = () => {
   const [result, setResult] = useState<RentComplianceResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoadingEpoque, setIsLoadingEpoque] = useState(false);
+  const [autoDetectedPeriod, setAutoDetectedPeriod] = useState<string | null>(null);
 
   // Sauvegarde automatique dans localStorage
   useEffect(() => {
@@ -58,12 +61,31 @@ const Index = () => {
     localStorage.setItem('isFurnished', isFurnished);
   }, [isFurnished]);
 
-  const handleAddressChange = (value: string, address?: SelectedAddress) => {
+  const handleAddressChange = async (value: string, address?: SelectedAddress) => {
     setLocation(value);
     if (address) {
       setSelectedAddress(address);
+      
+      // Auto-détection de l'époque de construction via APUR
+      setIsLoadingEpoque(true);
+      setAutoDetectedPeriod(null);
+      try {
+        const buildingData = await fetchBuildingConstructionPeriod(address.latitude, address.longitude);
+        if (buildingData.constructionPeriod) {
+          setConstructionPeriod(buildingData.constructionPeriod);
+          setAutoDetectedPeriod(buildingData.apurLabel);
+          console.log('[Index] Époque auto-détectée:', buildingData);
+        } else {
+          console.log('[Index] Époque non trouvée, sélection manuelle requise');
+        }
+      } catch (err) {
+        console.error('[Index] Erreur auto-détection époque:', err);
+      } finally {
+        setIsLoadingEpoque(false);
+      }
     } else {
       setSelectedAddress(null);
+      setAutoDetectedPeriod(null);
     }
     // Reset result when address changes
     setResult(null);
@@ -161,8 +183,28 @@ const Index = () => {
 
             {/* Époque de construction */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Époque de construction</Label>
-              <RadioGroup value={constructionPeriod} onValueChange={setConstructionPeriod}>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium">Époque de construction</Label>
+                {isLoadingEpoque && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground" data-testid="loading-epoque">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Détection automatique...</span>
+                  </div>
+                )}
+                {autoDetectedPeriod && !isLoadingEpoque && (
+                  <Badge variant="secondary" className="text-xs flex items-center gap-1" data-testid="auto-detected-badge">
+                    <Sparkles className="w-3 h-3" />
+                    Auto-détecté : {autoDetectedPeriod}
+                  </Badge>
+                )}
+              </div>
+              <RadioGroup 
+                value={constructionPeriod} 
+                onValueChange={(value) => {
+                  setConstructionPeriod(value);
+                  setAutoDetectedPeriod(null); // Clear auto-detected if user changes manually
+                }}
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="avant-1946" id="avant-1946" data-testid="construction-avant-1946" />
                   <Label htmlFor="avant-1946">Avant 1946</Label>
