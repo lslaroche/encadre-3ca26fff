@@ -139,37 +139,47 @@ const Results = () => {
               )}
             </div>
 
-            {/* Rent breakdown */}
-            <div className="space-y-3 bg-background/50 rounded-lg p-4">
-              <div className="flex justify-between items-center py-2 border-b border-border/50">
-                <div>
-                  <span className="text-sm">Loyer de référence</span>
-                  <span className="text-xs text-muted-foreground ml-2">({result.rentData.ref.toFixed(2)} €/m²)</span>
+            {/* Rent breakdown - sorted descending with user rent intercalated */}
+            {(() => {
+              const rentItems = [
+                { label: "Loyer majoré (max autorisé)", value: result.maxMajoredRent, perSqm: result.rentData.max, isUserRent: false, testId: "max-rent" },
+                { label: "Loyer de référence", value: result.maxAuthorizedRent, perSqm: result.rentData.ref, isUserRent: false, testId: "ref-rent" },
+                { label: "Loyer minoré", value: result.minRent, perSqm: result.rentData.min, isUserRent: false, testId: "min-rent" },
+                { label: "Votre loyer", value: result.currentRent, perSqm: null, isUserRent: true, testId: "current-rent" },
+              ].sort((a, b) => b.value - a.value);
+
+              return (
+                <div className="space-y-3 bg-background/50 rounded-lg p-4">
+                  {rentItems.map((item, index) => (
+                    <div 
+                      key={item.label}
+                      className={`flex justify-between items-center py-2 ${
+                        index < rentItems.length - 1 ? 'border-b border-border/50' : ''
+                      } ${
+                        item.isUserRent 
+                          ? isCompliant 
+                            ? 'bg-green-100 -mx-4 px-4 rounded' 
+                            : 'bg-red-100 -mx-4 px-4 rounded'
+                          : ''
+                      }`}
+                    >
+                      <div>
+                        <span className={`text-sm ${item.isUserRent ? 'font-bold' : ''}`}>{item.label}</span>
+                        {item.perSqm && (
+                          <span className="text-xs text-muted-foreground ml-2">({item.perSqm.toFixed(2)} €/m²)</span>
+                        )}
+                      </div>
+                      <span 
+                        className={`font-semibold ${item.isUserRent ? (isCompliant ? 'text-green-700 font-bold' : 'text-red-700 font-bold') : ''}`}
+                        data-testid={item.testId}
+                      >
+                        {item.value.toFixed(2)} €
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <span className="font-semibold" data-testid="ref-rent">{result.maxAuthorizedRent.toFixed(2)} €</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2 border-b border-border/50 bg-primary/5 -mx-4 px-4">
-                <div>
-                  <span className="text-sm font-medium">Loyer majoré (max autorisé)</span>
-                  <span className="text-xs text-muted-foreground ml-2">({result.rentData.max.toFixed(2)} €/m²)</span>
-                </div>
-                <span className="font-bold text-primary" data-testid="max-rent">{result.maxMajoredRent.toFixed(2)} €</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2 border-b border-border/50">
-                <div>
-                  <span className="text-sm">Loyer minoré</span>
-                  <span className="text-xs text-muted-foreground ml-2">({result.rentData.min.toFixed(2)} €/m²)</span>
-                </div>
-                <span className="font-semibold" data-testid="min-rent">{result.minRent.toFixed(2)} €</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-2">
-                <span className="text-sm">Votre loyer</span>
-                <span className="font-semibold" data-testid="current-rent">{result.currentRent.toFixed(2)} €</span>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Explanation */}
             <div className="mt-4 p-4 bg-background/70 rounded-lg text-sm">
