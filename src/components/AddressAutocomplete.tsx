@@ -3,17 +3,19 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface AddressResult {
-  geometry: {
-    coordinates: [number, number]; // [longitude, latitude]
-  };
-  properties: {
-    label: string;
-    city: string;
-    postcode: string;
-    citycode: string;
-    context: string;
-  };
+// Interface pour la réponse de l'API Géoplateforme autocomplétion
+interface GeoplatformeResult {
+  fulltext: string;
+  x: number; // longitude
+  y: number; // latitude
+  city: string;
+  postcode: string;
+  street: string;
+  housenumber: string;
+}
+
+interface GeoplatformeResponse {
+  results: GeoplatformeResult[];
 }
 
 export interface SelectedAddress {
@@ -37,7 +39,7 @@ export function AddressAutocomplete({
   placeholder = "Tapez une adresse à Paris...",
   className
 }: AddressAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
+  const [suggestions, setSuggestions] = useState<GeoplatformeResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
@@ -51,19 +53,21 @@ export function AddressAutocomplete({
 
     setIsLoading(true);
     try {
-      // Recherche d'adresses avec type=housenumber pour avoir des adresses précises
-      // Ajout des coordonnées de Paris pour prioriser les résultats parisiens
+      // Nouvelle API Géoplateforme d'autocomplétion
+      // terr=75 filtre sur Paris côté serveur
+      // type=StreetAddress pour les adresses uniquement
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber&lat=48.8566&lon=2.3522`
-      );
-      const data = await response.json();
-      
-      // Filtrer pour garder uniquement Paris (codes postaux 75xxx)
-      const parisResults = (data.features || []).filter((feature: AddressResult) => 
-        feature.properties.postcode?.startsWith("75")
+        `https://data.geopf.fr/geocodage/completion?text=${encodeURIComponent(query)}&terr=75&type=StreetAddress&maximumResponses=10`
       );
       
-      setSuggestions(parisResults.slice(0, 5));
+      if (!response.ok) {
+        throw new Error(`Erreur API: ${response.status}`);
+      }
+      
+      const data: GeoplatformeResponse = await response.json();
+      
+      // L'API filtre déjà sur Paris, pas besoin de filtrage client
+      setSuggestions(data.results || []);
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
       setSuggestions([]);
@@ -109,20 +113,18 @@ export function AddressAutocomplete({
     setIsOpen(true);
   };
 
-  const handleSuggestionClick = (suggestion: AddressResult) => {
-    const [longitude, latitude] = suggestion.geometry.coordinates;
-    
+  const handleSuggestionClick = (suggestion: GeoplatformeResult) => {
     const selectedAddress: SelectedAddress = {
-      label: suggestion.properties.label,
-      city: suggestion.properties.city,
-      postcode: suggestion.properties.postcode,
-      latitude,
-      longitude
+      label: suggestion.fulltext,
+      city: suggestion.city,
+      postcode: suggestion.postcode,
+      latitude: suggestion.y,
+      longitude: suggestion.x
     };
     
     console.log("📍 Adresse sélectionnée:", selectedAddress);
     
-    onChange(suggestion.properties.label, selectedAddress);
+    onChange(suggestion.fulltext, selectedAddress);
     setIsOpen(false);
     setSuggestions([]);
   };
@@ -155,9 +157,9 @@ export function AddressAutocomplete({
             >
               <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
               <div>
-                <div className="font-medium">{suggestion.properties.label}</div>
+                <div className="font-medium">{suggestion.fulltext}</div>
                 <div className="text-sm text-muted-foreground">
-                  {suggestion.properties.postcode} • {suggestion.properties.city}
+                  {suggestion.postcode} • {suggestion.city}
                 </div>
               </div>
             </button>
