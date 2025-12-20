@@ -138,6 +138,73 @@ test.describe('Encadrement des loyers Paris', () => {
     await expect(page.getByText(/Aucune adresse trouvée/i)).toBeVisible();
   });
 
+  test('autocomplétion trouve "10 Rue Jean-Jacques Rousseau" dans Paris', async ({ page }) => {
+    // Taper l'adresse problématique
+    await page.getByTestId('address-input').fill('10 rue jean-jacques rousseau');
+    
+    // Attendre les suggestions
+    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
+    
+    // Vérifier qu'au moins une suggestion contient l'adresse
+    const suggestions = page.getByTestId('address-suggestion');
+    await expect(suggestions.first()).toBeVisible();
+    
+    // Vérifier que la suggestion contient le texte recherché
+    const firstSuggestionText = await suggestions.first().textContent();
+    expect(firstSuggestionText?.toLowerCase()).toContain('jean-jacques rousseau');
+    expect(firstSuggestionText).toMatch(/75\d{3}/); // Code postal Paris
+    
+    // Cliquer sur la suggestion
+    await suggestions.first().click();
+    
+    // Vérifier que l'adresse est sélectionnée
+    await expect(page.getByTestId('address-selected')).toBeVisible();
+  });
+
+  test('autocomplétion trouve "3 rue romy schneider" dans le 18e', async ({ page }) => {
+    // Taper l'adresse problématique
+    await page.getByTestId('address-input').fill('3 rue romy schneider');
+    
+    // Attendre les suggestions
+    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
+    
+    // Vérifier qu'au moins une suggestion apparaît
+    const suggestions = page.getByTestId('address-suggestion');
+    await expect(suggestions.first()).toBeVisible();
+    
+    // Vérifier que la suggestion contient le texte et le bon arrondissement
+    const firstSuggestionText = await suggestions.first().textContent();
+    expect(firstSuggestionText?.toLowerCase()).toContain('romy schneider');
+    expect(firstSuggestionText).toContain('75018'); // 18e arrondissement
+    
+    // Cliquer sur la suggestion
+    await suggestions.first().click();
+    
+    // Vérifier que l'adresse est sélectionnée
+    await expect(page.getByTestId('address-selected')).toBeVisible();
+  });
+
+  test('autocomplétion affiche les suggestions en temps réel', async ({ page }) => {
+    const input = page.getByTestId('address-input');
+    
+    // Taper progressivement
+    await input.fill('10 ru');
+    
+    // Attendre que le debounce se termine (300ms) + temps de réponse API
+    await page.waitForTimeout(500);
+    
+    // Continuer à taper
+    await input.fill('10 rue jean');
+    
+    // Attendre les suggestions
+    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
+    
+    // Vérifier que des suggestions apparaissent
+    const suggestions = page.getByTestId('address-suggestion');
+    const count = await suggestions.count();
+    expect(count).toBeGreaterThan(0);
+  });
+
   test('conserve les données dans localStorage', async ({ page }) => {
     // Remplir quelques champs
     await page.getByTestId('surface-input').fill('45');
