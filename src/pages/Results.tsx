@@ -83,13 +83,13 @@ const Results = () => {
               </div>
               
               <div className="space-y-1">
-                <div className="text-muted-foreground">Surface</div>
-                <div className="font-medium">{formData.surface} m²</div>
+                <div className="text-muted-foreground">Quartier</div>
+                <div className="font-medium">{result.rentData.quartier}</div>
               </div>
               
               <div className="space-y-1">
-                <div className="text-muted-foreground">Loyer actuel</div>
-                <div className="font-medium">{parseFloat(formData.rent).toLocaleString("fr-FR")} €</div>
+                <div className="text-muted-foreground">Surface</div>
+                <div className="font-medium">{formData.surface} m²</div>
               </div>
               
               <div className="space-y-1">
@@ -100,12 +100,7 @@ const Results = () => {
               </div>
               
               <div className="space-y-1">
-                <div className="text-muted-foreground">Quartier</div>
-                <div className="font-medium">{result.rentData.quartier}</div>
-              </div>
-              
-              <div className="space-y-1">
-                <div className="text-muted-foreground">Époque</div>
+                <div className="text-muted-foreground">Construction</div>
                 <div className="font-medium">{constructionPeriodLabels[formData.constructionPeriod] || formData.constructionPeriod}</div>
               </div>
             </div>
