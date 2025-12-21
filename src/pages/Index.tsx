@@ -172,11 +172,8 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <Card className="shadow-lg">
           <CardHeader className="bg-secondary/50">
-            <CardTitle className="text-2xl font-bold flex items-center gap-2">
+            <CardTitle className="text-2xl font-bold">
               🔳 encadré
-              <Badge className="bg-[#000091] text-white text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">
-                beta
-              </Badge>
             </CardTitle>
             <CardDescription className="text-base">
               Vérifiez si votre loyer respecte l'encadrement à Paris (données 2025)
