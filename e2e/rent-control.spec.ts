@@ -6,7 +6,7 @@ test.describe('Encadrement des loyers Paris', () => {
   });
 
   test('affiche correctement la page d\'accueil', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /EncadrementLoyer Paris/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /encadré/i })).toBeVisible();
     await expect(page.getByTestId('address-input')).toBeVisible();
     await expect(page.getByTestId('simulate-button')).toBeVisible();
   });
@@ -138,7 +138,7 @@ test.describe('Encadrement des loyers Paris', () => {
     await expect(page.getByText(/Aucune adresse trouvée/i)).toBeVisible();
   });
 
-  test('conserve les données dans localStorage', async ({ page }) => {
+  test('le formulaire est vide après rechargement de la page', async ({ page }) => {
     // Remplir quelques champs
     await page.getByTestId('surface-input').fill('45');
     await page.getByTestId('rent-input').fill('1100');
@@ -147,10 +147,82 @@ test.describe('Encadrement des loyers Paris', () => {
     // Recharger la page
     await page.reload();
     
-    // Vérifier que les valeurs sont conservées
-    await expect(page.getByTestId('surface-input')).toHaveValue('45');
-    await expect(page.getByTestId('rent-input')).toHaveValue('1100');
-    await expect(page.getByTestId('construction-1946-1970')).toBeChecked();
+    // Vérifier que les valeurs sont réinitialisées (pas de persistance)
+    await expect(page.getByTestId('surface-input')).toHaveValue('');
+    await expect(page.getByTestId('rent-input')).toHaveValue('');
+    await expect(page.getByTestId('construction-1946-1970')).not.toBeChecked();
+  });
+
+  test('les résultats sont accessibles via URL avec paramètres', async ({ page }) => {
+    // Faire une simulation complète
+    await page.getByTestId('address-input').fill('50 Rue de Belleville 75020 Paris');
+    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
+    await page.getByTestId('address-suggestion').first().click();
+    
+    await page.getByTestId('construction-avant-1946').click();
+    await page.getByTestId('room-count-trigger').click();
+    await page.getByTestId('room-count-2').click();
+    await page.getByTestId('furnished-no').click();
+    await page.getByTestId('surface-input').fill('50');
+    await page.getByTestId('rent-input').fill('1200');
+    
+    await page.getByTestId('simulate-button').click();
+    await page.waitForSelector('[data-testid="compliance-badge"]', { timeout: 15000 });
+    
+    // Vérifier que l'URL contient les paramètres
+    const url = page.url();
+    expect(url).toContain('/resultats?');
+    expect(url).toContain('surface=50');
+    expect(url).toContain('rent=1200');
+  });
+
+  test('les résultats persistent après rechargement de la page', async ({ page }) => {
+    // Faire une simulation complète
+    await page.getByTestId('address-input').fill('50 Rue de Belleville 75020 Paris');
+    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
+    await page.getByTestId('address-suggestion').first().click();
+    
+    await page.getByTestId('construction-avant-1946').click();
+    await page.getByTestId('room-count-trigger').click();
+    await page.getByTestId('room-count-2').click();
+    await page.getByTestId('furnished-no').click();
+    await page.getByTestId('surface-input').fill('50');
+    await page.getByTestId('rent-input').fill('1200');
+    
+    await page.getByTestId('simulate-button').click();
+    await page.waitForSelector('[data-testid="compliance-badge"]', { timeout: 15000 });
+    
+    // Sauvegarder l'URL
+    const resultUrl = page.url();
+    
+    // Recharger la page
+    await page.reload();
+    
+    // Vérifier que les résultats sont toujours affichés
+    await expect(page.getByTestId('compliance-badge')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('current-rent')).toContainText('1200');
+  });
+
+  test('un lien de résultat partagé affiche les mêmes données', async ({ page }) => {
+    // Construire une URL avec des paramètres valides
+    const params = new URLSearchParams({
+      surface: '50',
+      rent: '1200',
+      address: '50 Rue de Belleville 75020 Paris',
+      postcode: '75020',
+      period: 'avant-1946',
+      rooms: '2',
+      furnished: 'non-meuble',
+      lat: '48.8713',
+      lng: '2.3851',
+    });
+    
+    // Accéder directement à l'URL avec paramètres
+    await page.goto(`/resultats?${params.toString()}`);
+    
+    // Vérifier que les résultats sont affichés
+    await expect(page.getByTestId('compliance-badge')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('current-rent')).toContainText('1200');
   });
 
   test('auto-détecte l\'époque de construction via APUR', async ({ page }) => {
