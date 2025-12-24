@@ -29,7 +29,7 @@ const Index = () => {
     setLocation(value);
     if (address) {
       setSelectedAddress(address);
-      
+
       // Auto-détection de l'époque de construction via APUR
       setIsLoadingEpoque(true);
       setAutoDetectedPeriod(null);
@@ -38,12 +38,12 @@ const Index = () => {
         if (buildingData.constructionPeriod) {
           setConstructionPeriod(buildingData.constructionPeriod);
           setAutoDetectedPeriod(buildingData.apurLabel);
-          console.log('[Index] Époque auto-détectée:', buildingData);
+          console.log("[Index] Époque auto-détectée:", buildingData);
         } else {
-          console.log('[Index] Époque non trouvée, sélection manuelle requise');
+          console.log("[Index] Époque non trouvée, sélection manuelle requise");
         }
       } catch (err) {
-        console.error('[Index] Erreur auto-détection époque:', err);
+        console.error("[Index] Erreur auto-détection époque:", err);
       } finally {
         setIsLoadingEpoque(false);
       }
@@ -56,30 +56,28 @@ const Index = () => {
 
   const handleSimulation = async () => {
     if (!selectedAddress || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const rentData = await fetchRentControl({
         latitude: selectedAddress.latitude,
         longitude: selectedAddress.longitude,
         roomCount,
         constructionPeriod,
-        isFurnished
+        isFurnished,
       });
-      
+
       if (!rentData) {
-        setError("Impossible de trouver les données d'encadrement pour cette adresse. Vérifiez que l'adresse est bien à Paris.");
+        setError(
+          "Impossible de trouver les données d'encadrement pour cette adresse. Vérifiez que l'adresse est bien à Paris.",
+        );
         return;
       }
-      
-      const complianceResult = calculateCompliance(
-        rentData,
-        parseFloat(surface),
-        parseFloat(rent)
-      );
-      
+
+      const complianceResult = calculateCompliance(rentData, parseFloat(surface), parseFloat(rent));
+
       // Navigate to results page with URL params for persistence
       const params = new URLSearchParams({
         surface,
@@ -103,7 +101,6 @@ const Index = () => {
         difference: complianceResult.difference.toString(),
       });
       navigate(`/resultats?${params.toString()}`);
-      
     } catch (err) {
       console.error("Erreur:", err);
       setError("Une erreur s'est produite lors de la vérification. Veuillez réessayer.");
@@ -120,14 +117,12 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <Card className="shadow-lg">
           <CardHeader className="bg-secondary/50">
-            <CardTitle className="text-2xl font-bold">
-              🔳 encadré
-            </CardTitle>
+            <CardTitle className="text-2xl font-bold">🔳 encadré</CardTitle>
             <CardDescription className="text-base">
               Vérifiez si votre loyer respecte l'encadrement à Paris (données 2025)
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="space-y-6 pt-6">
             {/* Localisation */}
             <div className="space-y-2">
@@ -150,7 +145,11 @@ const Index = () => {
                   </div>
                 )}
                 {autoDetectedPeriod && !isLoadingEpoque && (
-                  <Badge variant="secondary" className="text-xs flex items-center gap-1 animate-ai-nudge" data-testid="auto-detected-badge">
+                  <Badge
+                    variant="secondary"
+                    className="text-xs flex items-center gap-1 animate-ai-nudge"
+                    data-testid="auto-detected-badge"
+                  >
                     <Sparkles className="w-3 h-3" />
                     Auto-détecté : {autoDetectedPeriod}
                   </Badge>
@@ -175,18 +174,16 @@ const Index = () => {
                       "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                       constructionPeriod === option.value
                         ? "border-primary bg-primary/20"
-                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40"
+                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40",
                     )}
                   >
-                    <span className={cn(
-                      "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                      constructionPeriod === option.value
-                        ? "border-primary"
-                        : "border-muted-foreground/40"
-                    )}>
-                      {constructionPeriod === option.value && (
-                        <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span
+                      className={cn(
+                        "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                        constructionPeriod === option.value ? "border-primary" : "border-muted-foreground/40",
                       )}
+                    >
+                      {constructionPeriod === option.value && <span className="w-2 h-2 rounded-full bg-primary" />}
                     </span>
                     <span className="text-sm">{option.label}</span>
                   </button>
@@ -213,18 +210,16 @@ const Index = () => {
                       "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                       roomCount === option.value
                         ? "border-primary bg-primary/20"
-                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40"
+                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40",
                     )}
                   >
-                    <span className={cn(
-                      "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                      roomCount === option.value
-                        ? "border-primary"
-                        : "border-muted-foreground/40"
-                    )}>
-                      {roomCount === option.value && (
-                        <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span
+                      className={cn(
+                        "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                        roomCount === option.value ? "border-primary" : "border-muted-foreground/40",
                       )}
+                    >
+                      {roomCount === option.value && <span className="w-2 h-2 rounded-full bg-primary" />}
                     </span>
                     <span className="text-sm">{option.label}</span>
                   </button>
@@ -249,18 +244,16 @@ const Index = () => {
                       "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                       isFurnished === option.value
                         ? "border-primary bg-primary/20"
-                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40"
+                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40",
                     )}
                   >
-                    <span className={cn(
-                      "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
-                      isFurnished === option.value
-                        ? "border-primary"
-                        : "border-muted-foreground/40"
-                    )}>
-                      {isFurnished === option.value && (
-                        <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span
+                      className={cn(
+                        "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                        isFurnished === option.value ? "border-primary" : "border-muted-foreground/40",
                       )}
+                    >
+                      {isFurnished === option.value && <span className="w-2 h-2 rounded-full bg-primary" />}
                     </span>
                     <span className="text-sm">{option.label}</span>
                   </button>
@@ -294,7 +287,7 @@ const Index = () => {
               />
             </div>
 
-            <Button 
+            <Button
               onClick={handleSimulation}
               disabled={!isFormValid || isLoading}
               className="w-full bg-primary hover:bg-primary/90"
@@ -306,7 +299,7 @@ const Index = () => {
                   Vérification en cours...
                 </>
               ) : (
-                "Vérifier l'encadrement"
+                "Vérifier le loyer"
               )}
             </Button>
 
@@ -321,7 +314,6 @@ const Index = () => {
                 </CardContent>
               </Card>
             )}
-
           </CardContent>
         </Card>
 
@@ -334,19 +326,35 @@ const Index = () => {
             </h3>
             <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
               <p>
-                L'encadrement des loyers à Paris fixe trois valeurs par m² selon le quartier, le type de logement et l'époque de construction :
+                L'encadrement des loyers à Paris fixe trois valeurs par m² selon le quartier, le type de logement et
+                l'époque de construction :
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li><strong>Loyer de référence</strong> : valeur médiane du quartier</li>
-                <li><strong>Loyer majoré (+20%)</strong> : plafond maximum autorisé</li>
-                <li><strong>Loyer minoré (-30%)</strong> : plancher minimum</li>
+                <li>
+                  <strong>Loyer de référence</strong> : valeur médiane du quartier
+                </li>
+                <li>
+                  <strong>Loyer majoré (+20%)</strong> : plafond maximum autorisé
+                </li>
+                <li>
+                  <strong>Loyer minoré (-30%)</strong> : plancher minimum
+                </li>
               </ul>
               <p>
-                Votre loyer ne peut pas dépasser le <strong>loyer majoré</strong> sauf si le logement présente des caractéristiques exceptionnelles 
-                (vue, équipements haut de gamme, etc.) justifiant un "complément de loyer".
+                Votre loyer ne peut pas dépasser le <strong>loyer majoré</strong> sauf si le logement présente des
+                caractéristiques exceptionnelles (vue, équipements haut de gamme, etc.) justifiant un "complément de
+                loyer".
               </p>
               <p className="text-xs mt-4">
-                Source : <a href="https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">OpenData Paris - Données 2025</a>
+                Source :{" "}
+                <a
+                  href="https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-primary"
+                >
+                  OpenData Paris - Données 2025
+                </a>
               </p>
             </div>
           </CardContent>
