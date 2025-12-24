@@ -127,7 +127,7 @@ const Results = () => {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-4">
                   <MapPin className="w-5 h-5 text-primary" />
-                  <h2 className="font-semibold text-lg">Votre situation</h2>
+                  <h2 className="font-semibold text-lg">Votre logement</h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -288,11 +288,11 @@ const Results = () => {
                 <CardContent className="pt-6">
                   <h3 className="font-semibold mb-3">💡 Que faire maintenant ?</h3>
                   <div className="text-sm text-muted-foreground space-y-3">
-                    <p>
-                      Vous pouvez adresser une demande de mise en conformité à votre propriétaire par courrier
-                      recommandé. Si le propriétaire refuse, vous pouvez saisir la commission départementale de
-                      conciliation.
-                    </p>
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>Écrivez au propriétaire du logement.</li>
+                      <li>Demandez une mise en conformité du loyer.</li>
+                      <li>Si besoin, saisissez la commission départementale de conciliation.</li>
+                    </ol>
                     <a
                       href="https://www.service-public.fr/particuliers/vosdroits/F1314"
                       target="_blank"
