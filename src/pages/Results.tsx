@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink, Share2, Co
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RentComplianceResult } from "@/services/parisRentApi";
 import { toast } from "sonner";
+import Footer from "@/components/Footer";
 
 interface FormData {
   surface: string;
@@ -367,6 +368,7 @@ const Results = () => {
           </CardContent>
         </Card>
       </main>
+      <Footer />
     </div>
   );
 };
