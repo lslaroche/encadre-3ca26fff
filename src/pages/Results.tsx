@@ -347,12 +347,12 @@ const Results = () => {
                 {isMobile ? (
                   <>
                     <Share2 className="w-4 h-4 mr-2" />
-                    Partager cette simulation
+                    Partager le résultat
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4 mr-2" />
-                    Copier le lien de la simulation
+                    Copier le lien du résultat
                   </>
                 )}
               </Button>
