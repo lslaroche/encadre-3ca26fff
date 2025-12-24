@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink, Share2, Copy } from "lucide-react";
+import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink, Share2, Copy, Lightbulb } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RentComplianceResult } from "@/services/parisRentApi";
 import { toast } from "sonner";
@@ -320,7 +320,10 @@ const Results = () => {
             {!isCompliant && (
               <Card className="shadow-sm bg-muted/30">
                 <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-3">💡 Que faire maintenant ?</h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lightbulb className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">Que faire maintenant ?</h3>
+                  </div>
                   <div className="text-sm text-muted-foreground space-y-3">
                     <ol className="list-decimal list-inside space-y-2">
                       <li>Écrivez au propriétaire du logement.</li>
