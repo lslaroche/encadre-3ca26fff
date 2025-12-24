@@ -294,7 +294,7 @@ const Results = () => {
                       <li>Si besoin, saisissez la commission départementale de conciliation.</li>
                     </ol>
                     <a
-                      href="https://www.service-public.fr/particuliers/vosdroits/F1314"
+                      href="https://www.service-public.gouv.fr/particuliers/vosdroits/F1314"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-primary hover:underline"
