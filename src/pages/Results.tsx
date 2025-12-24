@@ -1,5 +1,5 @@
-import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,19 +33,80 @@ const constructionPeriodLabels: Record<string, string> = {
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as ResultsState | null;
+  const [searchParams] = useSearchParams();
+  const stateData = location.state as ResultsState | null;
+
+  // Parse data from URL params or use state
+  const data = useMemo(() => {
+    // Priority: state (initial navigation) > URL params (reload/share)
+    if (stateData) {
+      return stateData;
+    }
+
+    // Try to read from URL params
+    const surface = searchParams.get('surface');
+    const rent = searchParams.get('rent');
+    const address = searchParams.get('address');
+    const postcode = searchParams.get('postcode');
+    const period = searchParams.get('period');
+    const rooms = searchParams.get('rooms');
+    const furnished = searchParams.get('furnished');
+    const quartier = searchParams.get('quartier');
+    const refPrice = searchParams.get('refPrice');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const currentRent = searchParams.get('currentRent');
+    const maxAuthorizedRent = searchParams.get('maxAuthorizedRent');
+    const maxMajoredRent = searchParams.get('maxMajoredRent');
+    const minRent = searchParams.get('minRent');
+    const isCompliant = searchParams.get('isCompliant');
+    const difference = searchParams.get('difference');
+
+    // Check if we have all required params
+    if (!surface || !rent || !address || !refPrice || !currentRent) {
+      return null;
+    }
+
+    return {
+      formData: {
+        surface,
+        rent,
+        selectedAddress: {
+          label: address,
+          postcode: postcode || '',
+        },
+        constructionPeriod: period || '',
+        roomCount: rooms || '',
+        isFurnished: furnished || '',
+      },
+      result: {
+        currentRent: parseFloat(currentRent),
+        maxAuthorizedRent: parseFloat(maxAuthorizedRent || '0'),
+        maxMajoredRent: parseFloat(maxMajoredRent || '0'),
+        minRent: parseFloat(minRent || '0'),
+        isCompliant: isCompliant === 'true',
+        difference: parseFloat(difference || '0'),
+        rentData: {
+          quartier: quartier || '',
+          ref: parseFloat(refPrice),
+          min: parseFloat(minPrice || '0'),
+          max: parseFloat(maxPrice || '0'),
+        },
+      },
+    } as ResultsState;
+  }, [stateData, searchParams]);
 
   useEffect(() => {
-    if (!state) {
+    if (!data) {
       navigate("/", { replace: true });
     }
-  }, [state, navigate]);
+  }, [data, navigate]);
 
-  if (!state) {
+  if (!data) {
     return null;
   }
 
-  const { result, formData } = state;
+  const { result, formData } = data;
   const isCompliant = result.isCompliant;
 
   return (

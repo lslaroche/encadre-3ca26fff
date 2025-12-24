@@ -13,75 +13,17 @@ import { fetchBuildingConstructionPeriod } from "@/services/apurBuildingApi";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [location, setLocation] = useState(() => localStorage.getItem('location') || "");
-  const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(() => {
-    const saved = localStorage.getItem('selectedAddress');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [surface, setSurface] = useState(() => localStorage.getItem('surface') || "");
-  const [rent, setRent] = useState(() => localStorage.getItem('rent') || "");
-  const [constructionPeriod, setConstructionPeriod] = useState(() => localStorage.getItem('constructionPeriod') || "");
-  const [roomCount, setRoomCount] = useState(() => localStorage.getItem('roomCount') || "");
-  const [isFurnished, setIsFurnished] = useState(() => localStorage.getItem('isFurnished') || "");
+  const [location, setLocation] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
+  const [surface, setSurface] = useState("");
+  const [rent, setRent] = useState("");
+  const [constructionPeriod, setConstructionPeriod] = useState("");
+  const [roomCount, setRoomCount] = useState("");
+  const [isFurnished, setIsFurnished] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingEpoque, setIsLoadingEpoque] = useState(false);
   const [autoDetectedPeriod, setAutoDetectedPeriod] = useState<string | null>(null);
-
-  // Auto-détection de l'époque au chargement si adresse présente mais pas d'époque
-  useEffect(() => {
-    const detectConstructionPeriod = async () => {
-      if (selectedAddress && !constructionPeriod) {
-        setIsLoadingEpoque(true);
-        try {
-          const buildingData = await fetchBuildingConstructionPeriod(selectedAddress.latitude, selectedAddress.longitude);
-          if (buildingData.constructionPeriod) {
-            setConstructionPeriod(buildingData.constructionPeriod);
-            setAutoDetectedPeriod(buildingData.apurLabel);
-            console.log('[Index] Époque auto-détectée au chargement:', buildingData);
-          }
-        } catch (err) {
-          console.error('[Index] Erreur auto-détection époque:', err);
-        } finally {
-          setIsLoadingEpoque(false);
-        }
-      }
-    };
-    detectConstructionPeriod();
-  }, []); // Run once on mount
-
-  // Sauvegarde automatique dans localStorage
-  useEffect(() => {
-    localStorage.setItem('location', location);
-  }, [location]);
-  
-  useEffect(() => {
-    if (selectedAddress) {
-      localStorage.setItem('selectedAddress', JSON.stringify(selectedAddress));
-    } else {
-      localStorage.removeItem('selectedAddress');
-    }
-  }, [selectedAddress]);
-  
-  useEffect(() => {
-    localStorage.setItem('surface', surface);
-  }, [surface]);
-  
-  useEffect(() => {
-    localStorage.setItem('rent', rent);
-  }, [rent]);
-  
-  useEffect(() => {
-    localStorage.setItem('constructionPeriod', constructionPeriod);
-  }, [constructionPeriod]);
-  
-  useEffect(() => {
-    localStorage.setItem('roomCount', roomCount);
-  }, [roomCount]);
-  
-  useEffect(() => {
-    localStorage.setItem('isFurnished', isFurnished);
-  }, [isFurnished]);
 
   const handleAddressChange = async (value: string, address?: SelectedAddress) => {
     setLocation(value);
@@ -138,23 +80,29 @@ const Index = () => {
         parseFloat(rent)
       );
       
-      // Navigate to results page with data
-      navigate("/resultats", {
-        state: {
-          result: complianceResult,
-          formData: {
-            surface,
-            rent,
-            selectedAddress: {
-              label: selectedAddress.label,
-              postcode: selectedAddress.postcode,
-            },
-            constructionPeriod,
-            roomCount,
-            isFurnished,
-          },
-        },
+      // Navigate to results page with URL params for persistence
+      const params = new URLSearchParams({
+        surface,
+        rent,
+        address: selectedAddress.label,
+        postcode: selectedAddress.postcode,
+        period: constructionPeriod,
+        rooms: roomCount,
+        furnished: isFurnished,
+        lat: selectedAddress.latitude.toString(),
+        lng: selectedAddress.longitude.toString(),
+        quartier: rentData.quartier,
+        refPrice: rentData.ref.toString(),
+        minPrice: rentData.min.toString(),
+        maxPrice: rentData.max.toString(),
+        currentRent: complianceResult.currentRent.toString(),
+        maxAuthorizedRent: complianceResult.maxAuthorizedRent.toString(),
+        maxMajoredRent: complianceResult.maxMajoredRent.toString(),
+        minRent: complianceResult.minRent.toString(),
+        isCompliant: complianceResult.isCompliant.toString(),
+        difference: complianceResult.difference.toString(),
       });
+      navigate(`/resultats?${params.toString()}`);
       
     } catch (err) {
       console.error("Erreur:", err);
