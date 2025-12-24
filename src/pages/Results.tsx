@@ -3,8 +3,9 @@ import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink, Share2 } from "lucide-react";
 import { RentComplianceResult } from "@/services/parisRentApi";
+import { toast } from "sonner";
 
 interface FormData {
   surface: string;
@@ -108,6 +109,32 @@ const Results = () => {
 
   const { result, formData } = data;
   const isCompliant = result.isCompliant;
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const shareData = {
+      title: "Vérification encadrement des loyers - Paris",
+      text: isCompliant
+        ? "Mon loyer est conforme à l'encadrement des loyers parisien ✓"
+        : "Mon loyer dépasse l'encadrement des loyers parisien",
+      url: url,
+    };
+
+    try {
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Lien copié !", {
+          description: "Collez-le où vous voulez pour partager.",
+        });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        toast.error("Impossible de partager");
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/20 to-background">
@@ -307,8 +334,12 @@ const Results = () => {
               </Card>
             )}
 
-            {/* Bouton retour */}
-            <div className="pt-4">
+            {/* Boutons d'action */}
+            <div className="pt-4 space-y-3">
+              <Button onClick={handleShare} className="w-full">
+                <Share2 className="w-4 h-4 mr-2" />
+                Partager cette simulation
+              </Button>
               <Button variant="outline" onClick={() => navigate("/")} className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Vérifier un autre loyer
