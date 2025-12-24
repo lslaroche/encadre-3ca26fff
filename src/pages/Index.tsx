@@ -10,6 +10,7 @@ import { Info, AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { AddressAutocomplete, SelectedAddress } from "@/components/AddressAutocomplete";
 import { fetchRentControl, calculateCompliance } from "@/services/parisRentApi";
 import { fetchBuildingConstructionPeriod } from "@/services/apurBuildingApi";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -360,6 +361,7 @@ const Index = () => {
           </CardContent>
         </Card>
       </main>
+      <Footer />
     </div>
   );
 };
