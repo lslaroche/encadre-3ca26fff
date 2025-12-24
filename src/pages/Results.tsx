@@ -3,7 +3,8 @@ import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink, Share2 } from "lucide-react";
+import { ArrowLeft, MapPin, AlertTriangle, CheckCircle, ExternalLink, Share2, Copy } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { RentComplianceResult } from "@/services/parisRentApi";
 import { toast } from "sonner";
 
@@ -110,28 +111,34 @@ const Results = () => {
   const { result, formData } = data;
   const isCompliant = result.isCompliant;
 
+  const isMobile = useIsMobile();
+
   const handleShare = async () => {
     const url = window.location.href;
-    const shareData = {
-      title: "Vérification encadrement des loyers - Paris",
-      text: isCompliant
-        ? "Mon loyer est conforme à l'encadrement des loyers parisien ✓"
-        : "Mon loyer dépasse l'encadrement des loyers parisien",
-      url: url,
-    };
 
-    try {
-      if (navigator.share && navigator.canShare(shareData)) {
+    if (isMobile && navigator.share) {
+      const shareData = {
+        title: "Vérification encadrement des loyers - Paris",
+        text: isCompliant
+          ? "Mon loyer est conforme à l'encadrement des loyers parisien ✓"
+          : "Mon loyer dépasse l'encadrement des loyers parisien",
+        url: url,
+      };
+      try {
         await navigator.share(shareData);
-      } else {
+      } catch (err) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          toast.error("Impossible de partager");
+        }
+      }
+    } else {
+      try {
         await navigator.clipboard.writeText(url);
         toast.success("Lien copié !", {
           description: "Collez-le où vous voulez pour partager.",
         });
-      }
-    } catch (err) {
-      if (err instanceof Error && err.name !== "AbortError") {
-        toast.error("Impossible de partager");
+      } catch (err) {
+        toast.error("Impossible de copier le lien");
       }
     }
   };
@@ -337,8 +344,17 @@ const Results = () => {
             {/* Boutons d'action */}
             <div className="pt-4 space-y-3">
               <Button onClick={handleShare} className="w-full">
-                <Share2 className="w-4 h-4 mr-2" />
-                Partager cette simulation
+                {isMobile ? (
+                  <>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Partager cette simulation
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copier le lien de la simulation
+                  </>
+                )}
               </Button>
               <Button variant="outline" onClick={() => navigate("/")} className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />
