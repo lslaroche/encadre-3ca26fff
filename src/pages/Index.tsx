@@ -43,7 +43,7 @@ const Index = () => {
       setAutoDetectedPeriod(null);
       setAutoDetectedType(null);
       try {
-        const buildingData = await fetchBuildingConstructionPeriod(address.latitude, address.longitude);
+        const buildingData = await fetchBuildingConstructionPeriod(address.latitude, address.longitude, address.postcode);
         if (buildingData.constructionPeriod) {
           setConstructionPeriod(buildingData.constructionPeriod);
           setAutoDetectedPeriod(buildingData.apurLabel);

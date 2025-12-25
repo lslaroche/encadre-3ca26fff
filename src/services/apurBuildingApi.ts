@@ -53,7 +53,8 @@ function mapMorphoToBuildingType(morphoCode: number | null): 'appartement' | 'ma
 
 export async function fetchBuildingConstructionPeriod(
   latitude: number,
-  longitude: number
+  longitude: number,
+  postcode?: string
 ): Promise<ApurBuildingData> {
   try {
     // Créer une enveloppe (bbox) autour du point pour augmenter les chances de toucher un bâtiment
@@ -67,15 +68,23 @@ export async function fetchBuildingConstructionPeriod(
       spatialReference: { wkid: 4326 }
     };
 
-    const url = new URL('https://carto2.apur.org/apur/rest/services/OPENDATA/EMPRISE_BATIE_PARIS/MapServer/0/query');
+    // Choisir le bon endpoint selon le territoire
+    // Paris (75xxx) -> EMPRISE_BATIE_PARIS
+    // Est Ensemble (93xxx) -> EMPRISE_BATIE_METROPOLE_DU_GRAND_PARIS
+    const isParisPostcode = postcode?.startsWith('75');
+    const endpoint = isParisPostcode || !postcode
+      ? 'https://carto2.apur.org/apur/rest/services/OPENDATA/EMPRISE_BATIE_PARIS/MapServer/0/query'
+      : 'https://carto2.apur.org/apur/rest/services/OPENDATA/EMPRISE_BATIE_METROPOLE_DU_GRAND_PARIS/MapServer/0/query';
+
+    const url = new URL(endpoint);
     url.searchParams.set('geometry', JSON.stringify(envelope));
     url.searchParams.set('geometryType', 'esriGeometryEnvelope');
     url.searchParams.set('spatialRel', 'esriSpatialRelIntersects');
-    url.searchParams.set('outFields', 'c_perconst,c_morpho');  // Ajout de c_morpho pour le type de bien
+    url.searchParams.set('outFields', 'c_perconst,c_morpho');
     url.searchParams.set('returnGeometry', 'false');
     url.searchParams.set('f', 'json');
 
-    console.log('[APUR] Requête pour coordonnées:', { latitude, longitude });
+    console.log('[APUR] Requête pour coordonnées:', { latitude, longitude, postcode, endpoint });
     console.log('[APUR] URL:', url.toString());
 
     const response = await fetch(url.toString());
