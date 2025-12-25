@@ -174,7 +174,7 @@ const Index = () => {
                       "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                       constructionPeriod === option.value
                         ? "border-primary bg-primary/20"
-                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40",
+                        : "border-border bg-card hover:bg-primary/10 hover:border-primary/40",
                     )}
                   >
                     <span
@@ -210,7 +210,7 @@ const Index = () => {
                       "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                       roomCount === option.value
                         ? "border-primary bg-primary/20"
-                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40",
+                        : "border-border bg-card hover:bg-primary/10 hover:border-primary/40",
                     )}
                   >
                     <span
@@ -244,7 +244,7 @@ const Index = () => {
                       "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
                       isFurnished === option.value
                         ? "border-primary bg-primary/20"
-                        : "border-border bg-white hover:bg-primary/10 hover:border-primary/40",
+                        : "border-border bg-card hover:bg-primary/10 hover:border-primary/40",
                     )}
                   >
                     <span
@@ -303,9 +303,9 @@ const Index = () => {
 
             {/* Error */}
             {error && (
-              <Card className="border-2 border-orange-500 bg-orange-50" data-testid="error-message">
+              <Card className="border-2 border-orange-500 bg-orange-50 dark:bg-orange-950/30" data-testid="error-message">
                 <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 text-orange-700">
+                  <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
                     <AlertTriangle className="w-5 h-5" />
                     <span>{error}</span>
                   </div>
