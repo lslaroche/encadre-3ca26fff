@@ -146,8 +146,7 @@ const Index = () => {
                 )}
                 {autoDetectedPeriod && !isLoadingEpoque && (
                   <Badge
-                    variant="secondary"
-                    className="text-xs flex items-center gap-1 animate-ai-nudge"
+                    className="text-xs flex items-center gap-1 animate-ai-nudge bg-primary text-primary-foreground"
                     data-testid="auto-detected-badge"
                   >
                     <Sparkles className="w-3 h-3" />
