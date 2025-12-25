@@ -136,7 +136,7 @@ const Index = () => {
           <CardHeader className="bg-secondary/50">
             <CardTitle className="text-2xl font-bold">🔳 encadré</CardTitle>
             <CardDescription className="text-base">
-              Vérifiez si votre loyer respecte l'encadrement à Paris (données 2025)
+              Vérifiez si votre loyer respecte l'encadrement à Paris et Est Ensemble
             </CardDescription>
           </CardHeader>
 
