@@ -203,7 +203,7 @@ const Results = () => {
 
             {/* Carte 2 : Verdict */}
             <Card
-              className={`shadow-sm border-2 ${isCompliant ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}
+              className={`shadow-sm border-2 ${isCompliant ? "border-green-500 bg-green-50 dark:bg-green-950/30" : "border-red-500 bg-red-50 dark:bg-red-950/30"}`}
               data-testid="result-card"
             >
               <CardContent className="pt-6">
@@ -227,7 +227,7 @@ const Results = () => {
                   {!isCompliant && (
                     <div className="text-right" data-testid="rent-difference">
                       <div className="text-sm text-muted-foreground">Dépassement</div>
-                      <div className="text-xl font-bold text-red-600">+{result.difference.toFixed(2)} €/mois</div>
+                      <div className="text-xl font-bold text-red-600 dark:text-red-400">+{result.difference.toFixed(2)} €/mois</div>
                     </div>
                   )}
                 </div>
@@ -275,8 +275,8 @@ const Results = () => {
                           } ${
                             item.isUserRent
                               ? isCompliant
-                                ? "bg-green-100 -mx-4 px-4 rounded"
-                                : "bg-red-100 -mx-4 px-4 rounded"
+                                ? "bg-green-100 dark:bg-green-900/40 -mx-4 px-4 rounded"
+                                : "bg-red-100 dark:bg-red-900/40 -mx-4 px-4 rounded"
                               : ""
                           }`}
                         >
@@ -289,7 +289,7 @@ const Results = () => {
                             )}
                           </div>
                           <span
-                            className={`font-semibold ${item.isUserRent ? (isCompliant ? "text-green-700 font-bold" : "text-red-700 font-bold") : ""}`}
+                            className={`font-semibold ${item.isUserRent ? (isCompliant ? "text-green-700 dark:text-green-400 font-bold" : "text-red-700 dark:text-red-400 font-bold") : ""}`}
                             data-testid={item.testId}
                           >
                             {item.value.toFixed(2)} €
@@ -303,12 +303,12 @@ const Results = () => {
                 {/* Explanation */}
                 <div className="mt-4 p-4 bg-background/70 rounded-lg text-sm">
                   {isCompliant ? (
-                    <p className="text-green-700">
+                    <p className="text-green-700 dark:text-green-400">
                       ✓ Votre loyer de {result.currentRent.toFixed(2)} € est inférieur au loyer majoré de{" "}
                       {result.maxMajoredRent.toFixed(2)} €. Il respecte l'encadrement des loyers.
                     </p>
                   ) : (
-                    <p className="text-red-700">
+                    <p className="text-red-700 dark:text-red-400">
                       ✗ Votre loyer dépasse le loyer majoré de {result.difference.toFixed(2)} € par mois. Vous pouvez
                       demander une mise en conformité à votre propriétaire.
                     </p>
