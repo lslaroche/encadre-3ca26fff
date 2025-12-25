@@ -43,6 +43,13 @@ export function AddressAutocomplete({
   const debounceRef = useRef<NodeJS.Timeout>();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Codes postaux supportés: Paris (75xxx) et Est Ensemble
+  const SUPPORTED_POSTCODES = ['75', '93170', '93000', '93140', '93310', '93260', '93100', '93130', '93500', '93230'];
+  
+  const isSupportedPostcode = (postcode: string): boolean => {
+    return SUPPORTED_POSTCODES.some(prefix => postcode.startsWith(prefix) || postcode === prefix);
+  };
+
   const searchAddresses = async (query: string) => {
     if (query.length < 3) {
       setSuggestions([]);
@@ -52,18 +59,18 @@ export function AddressAutocomplete({
     setIsLoading(true);
     try {
       // Recherche d'adresses avec type=housenumber pour avoir des adresses précises
-      // Ajout des coordonnées de Paris pour prioriser les résultats parisiens
+      // Ajout des coordonnées de Paris pour prioriser les résultats parisiens et Est Ensemble
       const response = await fetch(
-        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=10&autocomplete=1&type=housenumber&lat=48.8566&lon=2.3522`
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=15&autocomplete=1&type=housenumber&lat=48.8566&lon=2.3522`
       );
       const data = await response.json();
       
-      // Filtrer pour garder uniquement Paris (codes postaux 75xxx)
-      const parisResults = (data.features || []).filter((feature: AddressResult) => 
-        feature.properties.postcode?.startsWith("75")
+      // Filtrer pour garder Paris (75xxx) et Est Ensemble
+      const supportedResults = (data.features || []).filter((feature: AddressResult) => 
+        isSupportedPostcode(feature.properties.postcode || '')
       );
       
-      setSuggestions(parisResults.slice(0, 5));
+      setSuggestions(supportedResults.slice(0, 5));
     } catch (error) {
       console.error("Erreur lors de la recherche d'adresses:", error);
       setSuggestions([]);
@@ -162,7 +169,7 @@ export function AddressAutocomplete({
 
       {isOpen && value.length >= 3 && suggestions.length === 0 && !isLoading && (
         <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg p-4 text-center text-muted-foreground text-sm">
-          Aucune adresse trouvée à Paris. Essayez une autre recherche.
+          Aucune adresse trouvée à Paris ou Est Ensemble. Essayez une autre recherche.
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 /**
- * Service pour récupérer l'époque de construction via l'API APUR
+ * Service pour récupérer l'époque de construction et le type de bien via l'API APUR
  * https://carto2.apur.org/apur/rest/services/OPENDATA/EMPRISE_BATIE_PARIS/MapServer/0
  */
 
@@ -7,6 +7,8 @@ export interface ApurBuildingData {
   constructionPeriod: string | null;
   apurCode: number | null;
   apurLabel: string | null;
+  buildingType: 'appartement' | 'maison' | null;
+  morphoCode: number | null;
 }
 
 // Mapping des codes APUR vers les périodes d'encadrement des loyers
@@ -42,6 +44,13 @@ const APUR_CODE_LABELS: Record<number, string> = {
   13: 'Après 2015',
 };
 
+// Mapping des codes morphologiques APUR vers type de bien
+// c_morpho: 1 = Logement individuel (maison), autres = immeuble (appartement)
+function mapMorphoToBuildingType(morphoCode: number | null): 'appartement' | 'maison' | null {
+  if (morphoCode === null) return null;
+  return morphoCode === 1 ? 'maison' : 'appartement';
+}
+
 export async function fetchBuildingConstructionPeriod(
   latitude: number,
   longitude: number
@@ -62,7 +71,7 @@ export async function fetchBuildingConstructionPeriod(
     url.searchParams.set('geometry', JSON.stringify(envelope));
     url.searchParams.set('geometryType', 'esriGeometryEnvelope');
     url.searchParams.set('spatialRel', 'esriSpatialRelIntersects');
-    url.searchParams.set('outFields', 'c_perconst');
+    url.searchParams.set('outFields', 'c_perconst,c_morpho');  // Ajout de c_morpho pour le type de bien
     url.searchParams.set('returnGeometry', 'false');
     url.searchParams.set('f', 'json');
 
@@ -73,30 +82,33 @@ export async function fetchBuildingConstructionPeriod(
     
     if (!response.ok) {
       console.error('[APUR] Erreur HTTP:', response.status);
-      return { constructionPeriod: null, apurCode: null, apurLabel: null };
+      return { constructionPeriod: null, apurCode: null, apurLabel: null, buildingType: null, morphoCode: null };
     }
 
     const data = await response.json();
     console.log('[APUR] Réponse:', data);
 
     if (data.features && data.features.length > 0) {
-      const apurCode = data.features[0].attributes?.c_perconst;
+      const attributes = data.features[0].attributes;
+      const apurCode = attributes?.c_perconst;
+      const morphoCode = attributes?.c_morpho;
       
-      if (apurCode && APUR_TO_RENT_PERIOD[apurCode]) {
-        const result: ApurBuildingData = {
-          constructionPeriod: APUR_TO_RENT_PERIOD[apurCode],
-          apurCode: apurCode,
-          apurLabel: APUR_CODE_LABELS[apurCode] || null
-        };
-        console.log('[APUR] Période trouvée:', result);
-        return result;
-      }
+      const result: ApurBuildingData = {
+        constructionPeriod: apurCode && APUR_TO_RENT_PERIOD[apurCode] ? APUR_TO_RENT_PERIOD[apurCode] : null,
+        apurCode: apurCode || null,
+        apurLabel: apurCode && APUR_CODE_LABELS[apurCode] ? APUR_CODE_LABELS[apurCode] : null,
+        buildingType: mapMorphoToBuildingType(morphoCode),
+        morphoCode: morphoCode || null,
+      };
+      
+      console.log('[APUR] Données trouvées:', result);
+      return result;
     }
 
     console.log('[APUR] Aucune donnée de construction trouvée');
-    return { constructionPeriod: null, apurCode: null, apurLabel: null };
+    return { constructionPeriod: null, apurCode: null, apurLabel: null, buildingType: null, morphoCode: null };
   } catch (error) {
     console.error('[APUR] Erreur lors de la requête:', error);
-    return { constructionPeriod: null, apurCode: null, apurLabel: null };
+    return { constructionPeriod: null, apurCode: null, apurLabel: null, buildingType: null, morphoCode: null };
   }
 }

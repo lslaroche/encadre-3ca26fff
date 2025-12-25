@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Info, AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { AddressAutocomplete, SelectedAddress } from "@/components/AddressAutocomplete";
-import { fetchRentControl, calculateCompliance } from "@/services/parisRentApi";
+import { fetchUnifiedRentControl, calculateUnifiedCompliance, getTerritoryFromPostcode, getTerritoryLabel } from "@/services/rentControlService";
 import { fetchBuildingConstructionPeriod } from "@/services/apurBuildingApi";
 import Footer from "@/components/Footer";
 
@@ -21,65 +21,78 @@ const Index = () => {
   const [constructionPeriod, setConstructionPeriod] = useState("");
   const [roomCount, setRoomCount] = useState("");
   const [isFurnished, setIsFurnished] = useState("");
+  const [buildingType, setBuildingType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingEpoque, setIsLoadingEpoque] = useState(false);
   const [autoDetectedPeriod, setAutoDetectedPeriod] = useState<string | null>(null);
+  const [autoDetectedType, setAutoDetectedType] = useState<string | null>(null);
+  const [territory, setTerritory] = useState<string | null>(null);
 
   const handleAddressChange = async (value: string, address?: SelectedAddress) => {
     setLocation(value);
     if (address) {
       setSelectedAddress(address);
+      
+      // Détecter le territoire
+      const detectedTerritory = getTerritoryFromPostcode(address.postcode);
+      setTerritory(detectedTerritory);
 
-      // Auto-détection de l'époque de construction via APUR
+      // Auto-détection via APUR
       setIsLoadingEpoque(true);
       setAutoDetectedPeriod(null);
+      setAutoDetectedType(null);
       try {
         const buildingData = await fetchBuildingConstructionPeriod(address.latitude, address.longitude);
         if (buildingData.constructionPeriod) {
           setConstructionPeriod(buildingData.constructionPeriod);
           setAutoDetectedPeriod(buildingData.apurLabel);
-          console.log("[Index] Époque auto-détectée:", buildingData);
-        } else {
-          console.log("[Index] Époque non trouvée, sélection manuelle requise");
         }
+        if (buildingData.buildingType) {
+          setBuildingType(buildingData.buildingType);
+          setAutoDetectedType(buildingData.buildingType === 'maison' ? 'Maison' : 'Appartement');
+        }
+        console.log("[Index] Auto-détection:", buildingData);
       } catch (err) {
-        console.error("[Index] Erreur auto-détection époque:", err);
+        console.error("[Index] Erreur auto-détection:", err);
       } finally {
         setIsLoadingEpoque(false);
       }
     } else {
       setSelectedAddress(null);
       setAutoDetectedPeriod(null);
+      setAutoDetectedType(null);
+      setTerritory(null);
     }
     setError(null);
   };
 
   const handleSimulation = async () => {
     if (!selectedAddress || !surface || !rent || !constructionPeriod || !roomCount || !isFurnished) return;
+    // Pour Est Ensemble, le type de bien est requis
+    if (territory === 'est-ensemble' && !buildingType) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const rentData = await fetchRentControl({
+      const rentData = await fetchUnifiedRentControl({
         latitude: selectedAddress.latitude,
         longitude: selectedAddress.longitude,
+        postcode: selectedAddress.postcode,
         roomCount,
         constructionPeriod,
         isFurnished,
+        buildingType: buildingType || 'appartement',
       });
 
       if (!rentData) {
-        setError(
-          "Impossible de trouver les données d'encadrement pour cette adresse. Vérifiez que l'adresse est bien à Paris.",
-        );
+        setError("Impossible de trouver les données d'encadrement pour cette adresse.");
         return;
       }
 
-      const complianceResult = calculateCompliance(rentData, parseFloat(surface), parseFloat(rent));
+      const complianceResult = calculateUnifiedCompliance(rentData, parseFloat(surface), parseFloat(rent));
 
-      // Navigate to results page with URL params for persistence
       const params = new URLSearchParams({
         surface,
         rent,
@@ -88,6 +101,8 @@ const Index = () => {
         period: constructionPeriod,
         rooms: roomCount,
         furnished: isFurnished,
+        buildingType: buildingType || 'appartement',
+        territory: rentData.territory,
         lat: selectedAddress.latitude.toString(),
         lng: selectedAddress.longitude.toString(),
         quartier: rentData.quartier,
@@ -110,7 +125,8 @@ const Index = () => {
     }
   };
 
-  const isFormValid = selectedAddress && surface && rent && constructionPeriod && roomCount && isFurnished;
+  const isFormValid = selectedAddress && surface && rent && constructionPeriod && roomCount && isFurnished && 
+    (territory !== 'est-ensemble' || buildingType);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/20 to-background">
@@ -127,11 +143,16 @@ const Index = () => {
           <CardContent className="space-y-6 pt-6">
             {/* Localisation */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Adresse du logement à Paris</Label>
+              <Label className="text-sm font-medium">Adresse du logement</Label>
               <AddressAutocomplete
                 value={location}
                 onChange={handleAddressChange}
               />
+              {territory && (
+                <Badge variant="outline" className="text-xs">
+                  {getTerritoryLabel(territory as any)} {territory === 'est-ensemble' ? '(données 2023)' : '(données 2025)'}
+                </Badge>
+              )}
             </div>
 
             {/* Époque de construction */}
@@ -226,6 +247,53 @@ const Index = () => {
               </div>
             </div>
 
+            {/* Type de bien (visible uniquement pour Est Ensemble ou si auto-détecté) */}
+            {(territory === 'est-ensemble' || autoDetectedType) && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">Type de bien</Label>
+                  {autoDetectedType && !isLoadingEpoque && (
+                    <Badge className="text-xs flex items-center gap-1 animate-ai-nudge bg-primary text-primary-foreground">
+                      <Sparkles className="w-3 h-3" />
+                      Auto-détecté : {autoDetectedType}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: "appartement", label: "Appartement" },
+                    { value: "maison", label: "Maison" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setBuildingType(option.value);
+                        setAutoDetectedType(null);
+                      }}
+                      data-testid={`building-type-${option.value}`}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors",
+                        buildingType === option.value
+                          ? "border-primary bg-primary/20"
+                          : "border-border bg-card hover:bg-primary/10 hover:border-primary/40",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                          buildingType === option.value ? "border-primary" : "border-muted-foreground/40",
+                        )}
+                      >
+                        {buildingType === option.value && <span className="w-2 h-2 rounded-full bg-primary" />}
+                      </span>
+                      <span className="text-sm">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Type de location */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Type de location</Label>
@@ -319,11 +387,11 @@ const Index = () => {
           <CardContent className="pt-6">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Info className="w-4 h-4" />
-              Comment fonctionne l'encadrement des loyers à Paris ?
+              Comment fonctionne l'encadrement des loyers ?
             </h3>
             <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
               <p>
-                L'encadrement des loyers à Paris fixe trois valeurs par m² selon le quartier, le type de logement et
+                L'encadrement des loyers fixe trois valeurs par m² selon le quartier, le type de logement et
                 l'époque de construction :
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
@@ -339,18 +407,16 @@ const Index = () => {
               </ul>
               <p>
                 Votre loyer ne peut pas dépasser le <strong>loyer majoré</strong> sauf si le logement présente des
-                caractéristiques exceptionnelles (vue, équipements haut de gamme, etc.) justifiant un "complément de
-                loyer".
+                caractéristiques exceptionnelles justifiant un "complément de loyer".
               </p>
               <p className="text-xs mt-4">
-                Source :{" "}
-                <a
-                  href="https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-primary"
-                >
-                  OpenData Paris - Données 2025
+                Sources :{" "}
+                <a href="https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+                  OpenData Paris 2025
+                </a>
+                {" • "}
+                <a href="https://www.data.gouv.fr/fr/datasets/encadrement-des-loyers-de-est-ensemble/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+                  Est Ensemble 2023
                 </a>
               </p>
             </div>
