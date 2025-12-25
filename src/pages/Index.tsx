@@ -131,7 +131,6 @@ const Index = () => {
               <AddressAutocomplete
                 value={location}
                 onChange={handleAddressChange}
-                placeholder="Tapez une adresse à Paris..."
               />
             </div>
 
@@ -267,7 +266,6 @@ const Index = () => {
               <Label className="text-sm font-medium">Surface du logement (m²)</Label>
               <Input
                 type="number"
-                placeholder="Ex: 45"
                 value={surface}
                 onChange={(e) => setSurface(e.target.value)}
                 className="bg-muted/50 border-primary/20 focus:border-primary"
@@ -280,7 +278,6 @@ const Index = () => {
               <Label className="text-sm font-medium">Loyer hors charges (€)</Label>
               <Input
                 type="number"
-                placeholder="Ex: 1200"
                 value={rent}
                 onChange={(e) => setRent(e.target.value)}
                 className="bg-muted/50 border-primary/20 focus:border-primary"
