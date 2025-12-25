@@ -119,10 +119,10 @@ const Results = () => {
 
     if (isMobile && navigator.share) {
       const shareData = {
-        title: "Vérification encadrement des loyers",
+        title: "Vérification encadrement des loyers - Paris",
         text: isCompliant
-          ? "Mon loyer est conforme à l'encadrement des loyers ✓"
-          : "Mon loyer dépasse l'encadrement des loyers",
+          ? "Mon loyer est conforme à l'encadrement des loyers parisien ✓"
+          : "Mon loyer dépasse l'encadrement des loyers parisien",
         url: url,
       };
       try {
@@ -152,7 +152,7 @@ const Results = () => {
           <CardHeader className="bg-secondary/50">
             <CardTitle className="text-2xl font-bold">🔳 encadré</CardTitle>
             <CardDescription className="text-base">
-              Vérifiez si votre loyer respecte l'encadrement à Paris et Est Ensemble
+              Vérifiez si votre loyer respecte l'encadrement à Paris (données 2025)
             </CardDescription>
           </CardHeader>
 

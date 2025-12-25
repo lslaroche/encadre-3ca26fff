@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Encadrement des loyers Paris et Est Ensemble', () => {
+test.describe('Encadrement des loyers Paris', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
@@ -274,119 +274,5 @@ test.describe('Encadrement des loyers Paris et Est Ensemble', () => {
     
     // Vérifier que la sélection manuelle fonctionne
     await expect(page.getByTestId('construction-avant-1946')).toBeChecked();
-  });
-
-  // ========== Tests Est Ensemble ==========
-
-  test('identifie correctement une adresse à Montreuil (Est Ensemble)', async ({ page }) => {
-    // Remplir l'adresse Est Ensemble
-    await page.getByTestId('address-input').fill('10 Rue de Paris 93100 Montreuil');
-    
-    // Attendre les suggestions et cliquer sur la première
-    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
-    await page.getByTestId('address-suggestion').first().click();
-    
-    // Vérifier que l'adresse est sélectionnée
-    await expect(page.getByTestId('address-selected')).toBeVisible();
-    
-    // Vérifier que le badge territoire affiche "Est Ensemble"
-    await expect(page.getByText(/Est Ensemble/i)).toBeVisible();
-  });
-
-  test('affiche le champ Type de bien pour Est Ensemble', async ({ page }) => {
-    // Sélectionner une adresse Est Ensemble
-    await page.getByTestId('address-input').fill('10 Rue de Paris 93100 Montreuil');
-    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
-    await page.getByTestId('address-suggestion').first().click();
-    
-    // Attendre la fin du chargement
-    await page.waitForFunction(
-      () => !document.querySelector('[data-testid="loading-epoque"]'),
-      { timeout: 10000 }
-    );
-    
-    // Vérifier que les boutons type de bien sont visibles
-    await expect(page.getByTestId('building-type-appartement')).toBeVisible();
-    await expect(page.getByTestId('building-type-maison')).toBeVisible();
-  });
-
-  test('le type de bien est requis pour Est Ensemble', async ({ page }) => {
-    // Sélectionner une adresse Est Ensemble
-    await page.getByTestId('address-input').fill('10 Rue de Paris 93100 Montreuil');
-    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
-    await page.getByTestId('address-suggestion').first().click();
-    
-    // Attendre la fin du chargement
-    await page.waitForFunction(
-      () => !document.querySelector('[data-testid="loading-epoque"]'),
-      { timeout: 10000 }
-    );
-    
-    // Remplir tous les champs SAUF le type de bien
-    await page.getByTestId('construction-avant-1946').click();
-    await page.getByTestId('room-count-1').click();
-    await page.getByTestId('furnished-no').click();
-    await page.getByTestId('surface-input').fill('50');
-    await page.getByTestId('rent-input').fill('800');
-    
-    // Le bouton doit être désactivé car le type de bien n'est pas sélectionné
-    await expect(page.getByTestId('simulate-button')).toBeDisabled();
-    
-    // Sélectionner le type de bien
-    await page.getByTestId('building-type-appartement').click();
-    
-    // Le bouton doit maintenant être activé
-    await expect(page.getByTestId('simulate-button')).toBeEnabled();
-  });
-
-  test('calcule correctement un loyer pour Est Ensemble (Pantin)', async ({ page }) => {
-    // Sélectionner une adresse à Pantin
-    await page.getByTestId('address-input').fill('1 Avenue Jean Lolive 93500 Pantin');
-    await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
-    await page.getByTestId('address-suggestion').first().click();
-    
-    // Attendre la fin du chargement
-    await page.waitForFunction(
-      () => !document.querySelector('[data-testid="loading-epoque"]'),
-      { timeout: 10000 }
-    );
-    
-    // Remplir les champs
-    await page.getByTestId('construction-avant-1946').click();
-    await page.getByTestId('room-count-2').click();
-    await page.getByTestId('furnished-no').click();
-    await page.getByTestId('building-type-appartement').click();
-    await page.getByTestId('surface-input').fill('50');
-    await page.getByTestId('rent-input').fill('800'); // Loyer bas pour être conforme
-    
-    // Lancer la simulation
-    await page.getByTestId('simulate-button').click();
-    
-    // Attendre le résultat
-    await page.waitForSelector('[data-testid="compliance-badge"]', { timeout: 15000 });
-    
-    // Vérifier que le résultat est affiché
-    const badge = page.getByTestId('compliance-badge');
-    await expect(badge).toBeVisible();
-  });
-
-  test('accepte les adresses des 9 villes Est Ensemble', async ({ page }) => {
-    const estEnsembleAddresses = [
-      '1 Rue de Bagnolet 93170 Bagnolet',
-      '1 Avenue Paul Vaillant Couturier 93000 Bobigny',
-      '1 Rue Jules Guesde 93140 Bondy',
-    ];
-    
-    for (const address of estEnsembleAddresses) {
-      await page.goto('/');
-      await page.getByTestId('address-input').fill(address);
-      
-      // Attendre les suggestions
-      await page.waitForSelector('[data-testid="address-suggestion"]', { timeout: 10000 });
-      
-      // Vérifier qu'au moins une suggestion est visible
-      const suggestions = page.getByTestId('address-suggestion');
-      await expect(suggestions.first()).toBeVisible();
-    }
   });
 });
