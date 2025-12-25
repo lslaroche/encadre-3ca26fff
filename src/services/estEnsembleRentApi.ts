@@ -59,8 +59,8 @@ function mapConstructionPeriod(period: string): string {
   return mapping[period] || period;
 }
 
-function mapRoomCount(roomCount: string): number {
-  if (roomCount === '4+') return 4;
+function mapRoomCount(roomCount: string): number | string {
+  if (roomCount === '4+') return '4 et plus';
   return parseInt(roomCount, 10);
 }
 
