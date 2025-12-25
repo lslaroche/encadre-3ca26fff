@@ -34,7 +34,7 @@ interface AddressAutocompleteProps {
 export function AddressAutocomplete({
   value,
   onChange,
-  placeholder = "Tapez une adresse à Paris...",
+  placeholder,
   className
 }: AddressAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
